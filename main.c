@@ -19,17 +19,11 @@ int main(int argc, char *argv[]) {
             error("Unable to allocate memory.");
         while(1) {
             scanf("%s", buffer);
-            Message m;
-            Attr attrs;
-            int i = 0;
-            for(i = 0; buffer[i] != '\0'; i++);
-            printf("Length: %d\n",i);
-            attrs.len = i; // Size without the NULL terminator.
-            //attrs.len = strlen(buffer);   // This was throwing an unknown error. Any ideas why?
-            attrs.seq = 1;
-            attrs.type = TYPE_FILESIZE;
-            m = prepare_msg(attrs, buffer);
-            send_msg(socket, &m);
+            Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
+            Message *m;
+            m = create_msg(attrs.len + 5);
+            *m = prepare_msg(attrs, buffer);
+            send_msg(socket, m);
         }
     }
     else if(strcmp(argv[1], "server") == 0) {
@@ -54,15 +48,8 @@ int main(int argc, char *argv[]) {
         while(1) {
             scanf("%s", buffer);
             Message *m;
-            Attr attrs;
-            int i = 0;
-            for(i = 0; buffer[i] != '\0'; i++);
-            printf("Length: %d\n",i);
-            attrs.len = i; // Size without the NULL terminator.
-            //attrs.len = strlen(buffer);   // This was throwing an unknown error. Any ideas why?
-            attrs.seq = 1;
-            attrs.type = TYPE_FILESIZE;
-            m = create_msg(i + 5);
+            Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
+            m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
             buffer = msg_to_str(m);
             m = str_to_msg(buffer);
