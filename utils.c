@@ -11,11 +11,11 @@ void error(const char *msg) {
     exit(1);
 }
 
-Message* create_msg(int data_length) {
+Message* create_msg(int length) {
     // Only allocate for m->data, cause the others members of the struct are not pointers, which means they have a constant length,
     // so the compiler will take care of that for us.
     Message *m;
-    if((m->data = malloc(data_length)) == NULL)
+    if((m = malloc(1 + 2 + length + 1 + 1)) == NULL)
         error("Unable to allocate memory.");
     return m;
 }
@@ -50,6 +50,7 @@ char* msg_to_str(Message *m) {
 
 Message* str_to_msg(char* c) {
     Message *m;
+    m = create_msg(strlen(c)); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
     m->init = c[0];
     puts(c);
     memcpy(&m->attr, c+1, 2);
@@ -64,6 +65,7 @@ Message* str_to_msg(char* c) {
 Message prepare_msg(Attr attr, unsigned char *data) {
     Message *msg;
     int i;
+    msg = create_msg(attr.len);
     printf("Criando mensagem... \n");
     msg->init = 0x7E; // 0111 1110
     msg->attr.len = attr.len;
