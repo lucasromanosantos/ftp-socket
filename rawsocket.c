@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
 int ConexaoRawSocket(char *device)
 {
   int soquete;
