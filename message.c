@@ -2,11 +2,8 @@
 
 void send_ack() {
     Message *m;
-    m = create_msg(0);
-    Attr attr;
-    attr.len = 0;
-    attr.seq = 0;
-    attr.type = TYPE_ACK;
+    m = create_msg(0); // No data in this message, so, its length is 0.
+    Attr attr = prepare_attr(0,0,TYPE_ACK);
     *m = prepare_msg(attr,"");
     send_msg(m);
     print_message(m);
@@ -19,6 +16,7 @@ int send_msg(int socket, Message *m) {
     size_t length = msg_length(m) * 8;
     Message *p = m;
     char *s = msg_to_str(p);
+    // Actually send the message.
     while(length > 0) {
         n = send(socket, s, length, 0);
         printf("%d bits enviados... \n", (int)n);
@@ -42,6 +40,7 @@ int receive(int socket, unsigned char *data, Message *m) {
         return 0; // Fail
     }
     else {
+        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);

@@ -12,8 +12,6 @@ void error(const char *msg) {
 }
 
 Message* create_msg(int length) {
-    // Only allocate for m->data, cause the others members of the struct are not pointers, which means they have a constant length,
-    // so the compiler will take care of that for us.
     Message *m;
     if((m = malloc(1 + 2 + length + 1 + 1)) == NULL)
         error("Unable to allocate memory.");
@@ -28,29 +26,20 @@ int msg_length(Message *m) {
 char* msg_to_str(Message *m) {
     int i,pos;
     unsigned char *c;
-    if((c = malloc(262)) == NULL)
-        error("Unable to allocate memory."); // 1 init + 2 attr + 1 par + 256 = 260 + '\0'
-    //unsigned char* c;
-    //if((c = malloc(msg_length(m))) == NULL)
-    //    error("Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
+    if((c = malloc(msg_length(m))) == NULL)
+        error("Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
     c[0] = m->init;
-    unsigned char* p = c + 1;
-    memcpy(p,&m->attr,2);
-    /* Uncomment this to see the proof that memcpy does its work correctly.
-    memcpy(&m->attr,p,2);
-    printf("Proof: Len: %d | Seq: %d | Type: %d\n",m->attr.len,m->attr.seq,m->attr.type);
-    */
-    for(i=0;i<strlen(m->data);i++) // Stop condition without +1, because I dont want the NULL terminator (to get parity)
-        c[i+3] = m->data[i];
-    pos = strlen(c);
-    c[pos] = m->par;
-    c[pos+1] = '\0';
+    memcpy(c+1,&m->attr,2);
+    memcpy(c+3,m->data,m->attr.len);
+    c[m->attr.len + 3] = m->par;
+    c[m->attr.len + 4] = '\0';
     return c;
 }
 
 Message* str_to_msg(char* c) {
     Message *m;
-    m = create_msg(strlen(c)); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
+    m = create_msg(strlen(c)-5); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
+    // Ok, maybe strlen is not thaaat wrong. In fact, its probably correct. Someone should revise it.
     m->init = c[0];
     memcpy(&m->attr, c+1, 2);
     if((m->data = malloc(m->attr.len)) == NULL)
@@ -61,20 +50,25 @@ Message* str_to_msg(char* c) {
 }
 
 Message prepare_msg(Attr attr, unsigned char *data) {
-    Message *msg;
-    int i;
-    msg = create_msg(attr.len);
+    Message *m;
+    m = create_msg(attr.len);
     printf("Criando mensagem... \n");
-    msg->init = 0x7E; // 0111 1110
-    msg->attr.len = attr.len;
-    msg->attr.seq = attr.seq;
-    msg->attr.type = attr.type;
-    if((msg->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
+    m->init = 0x7E; // 0111 1110
+    m->attr.len = attr.len;
+    m->attr.seq = attr.seq;
+    m->attr.type = attr.type;
+    if((m->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
         error("Unable to allocate memory.");
-    //strcpy(msg->data, data);  // This was throwing an unknown error. Any ideas why?
-    for(i=0; i<attr.len; i++)
-        msg->data[i] = data[i];
-    msg->par = 0;
-    print_message(msg);
-    return *msg;
+    strcpy(m->data, data);  // This was throwing an unknown error. Any ideas why?
+    m->par = 0;
+    print_message(m);
+    return *m;
+}
+
+Attr prepare_attr(int length,int seq,int type) {
+    Attr a;
+    a.len = length;
+    a.seq = seq;
+    a.type = type;
+    return a;
 }
