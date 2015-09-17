@@ -6,6 +6,7 @@ int print_message(Message *m) {
 }
 
 void error(const char *msg) {
+    puts(msg);
     perror(msg);
     exit(1);
 }
@@ -14,7 +15,8 @@ Message* create_msg(int data_length) {
     // Only allocate for m->data, cause the others members of the struct are not pointers, which means they have a constant length,
     // so the compiler will take care of that for us.
     Message *m;
-    m->data = malloc(data_length);
+    if((m->data = malloc(data_length)) == NULL)
+        error("Unable to allocate memory.");
     return m;
 }
 
@@ -25,8 +27,12 @@ int msg_length(Message *m) {
 
 char* msg_to_str(Message *m) {
     int i,pos;
-    unsigned char* c = malloc(262); // 1 init + 2 attr + 1 par + 256 = 260 + '\0'
-    //unsigned char* c = malloc(msg_length(m)); // Allocar com o tamanho CORRETO da mensagem.
+    unsigned char *c;
+    if((c = malloc(262)) == NULL)
+        error("Unable to allocate memory."); // 1 init + 2 attr + 1 par + 256 = 260 + '\0'
+    //unsigned char* c;
+    //if((c = malloc(msg_length(m))) == NULL)
+    //    error("Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
     c[0] = m->init;
     unsigned char* p = c + 1;
     memcpy(p,&m->attr,2);
@@ -45,8 +51,11 @@ char* msg_to_str(Message *m) {
 Message* str_to_msg(char* c) {
     Message *m;
     m->init = c[0];
-    memcpy(&m->attr, c + 1, 2);
-    m->data = malloc(m->attr.len);
+    puts(c);
+    memcpy(&m->attr, c+1, 2);
+    puts(c);
+    if((m->data = malloc(m->attr.len)) == NULL)
+        error("Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
     m->par = c[strlen(c)];
     return m;
@@ -60,7 +69,8 @@ Message prepare_msg(Attr attr, unsigned char *data) {
     msg->attr.len = attr.len;
     msg->attr.seq = attr.seq;
     msg->attr.type = attr.type;
-    msg->data = malloc(sizeof(char) * (attr.len + 1));
+    if((msg->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
+        error("Unable to allocate memory.");
     //strcpy(msg->data, data);  // This was throwing an unknown error. Any ideas why?
     for(i=0; i<attr.len; i++)
         msg->data[i] = data[i];

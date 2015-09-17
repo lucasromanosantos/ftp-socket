@@ -14,7 +14,9 @@ int main(int argc, char *argv[]) {
     printf("Running on %s mode...\n", argv[1]);
 
     if(strcmp(argv[1], "client") == 0) {
-        unsigned char *buffer = malloc(sizeof(char) * BUF_SIZE + 1);
+        unsigned char *buffer;
+        if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
+            error("Unable to allocate memory.");
         while(1) {
             scanf("%s", buffer);
             Message m;
@@ -31,10 +33,18 @@ int main(int argc, char *argv[]) {
         }
     }
     else if(strcmp(argv[1], "server") == 0) {
-        unsigned char *buffer = malloc(MAX_MSG_LEN);
+        unsigned char *buffer;
+        if((buffer = malloc(MAX_MSG_LEN)) == NULL)
+            error("Error allocating memory.");
         Message *m;
+        int res = 0;
         while(1) {
-            m = receive(socket, buffer);
+            res = receive(socket, buffer, m);
+            if(res == 1) {
+                puts("Sending acknowledge...");
+                send_ack();
+                puts("Ack sent.");
+            }
         }
     }
     return 1;
