@@ -17,10 +17,13 @@ int main(int argc, char *argv[]) {
         unsigned char *buffer = malloc(sizeof(char) * BUF_SIZE + 1);
         while(1) {
             scanf("%s", buffer);
-            puts(buffer);
             Message m;
             Attr attrs;
-            attrs.tam = 63;
+            int i = 0;
+            for(i = 0; buffer[i] != '\0'; i++);
+            printf("Length: %d\n",i);
+            attrs.len = i; // Size without the NULL terminator.
+            //attrs.len = strlen(buffer);   // This was throwing an unknown error. Any ideas why?
             attrs.seq = 1;
             attrs.type = TYPE_FILESIZE;
             m = prepare_msg(attrs, buffer);

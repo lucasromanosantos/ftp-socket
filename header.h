@@ -36,7 +36,7 @@
 #define TYPE_END 15
 
 typedef struct Attr {
-	unsigned short tam : 6,
+	unsigned short len : 6,
      	  		   seq : 6,
 	     		   type : 4;
 } Attr;
