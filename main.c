@@ -47,5 +47,27 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    else if(strcmp(argv[1], "alone") == 0) {
+        unsigned char *buffer;
+        if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
+            error("Unable to allocate memory.");
+        while(1) {
+            scanf("%s", buffer);
+            Message *m;
+            Attr attrs;
+            int i = 0;
+            for(i = 0; buffer[i] != '\0'; i++);
+            printf("Length: %d\n",i);
+            attrs.len = i; // Size without the NULL terminator.
+            //attrs.len = strlen(buffer);   // This was throwing an unknown error. Any ideas why?
+            attrs.seq = 1;
+            attrs.type = TYPE_FILESIZE;
+            m = create_msg(i + 5);
+            *m = prepare_msg(attrs, buffer);
+            buffer = msg_to_str(m);
+            m = str_to_msg(buffer);
+            print_message(m);
+        }
+    }
     return 1;
 }

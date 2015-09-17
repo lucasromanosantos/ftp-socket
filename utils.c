@@ -52,9 +52,7 @@ Message* str_to_msg(char* c) {
     Message *m;
     m = create_msg(strlen(c)); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
     m->init = c[0];
-    puts(c);
     memcpy(&m->attr, c+1, 2);
-    puts(c);
     if((m->data = malloc(m->attr.len)) == NULL)
         error("Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
