@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include<stdint.h> //para usar uint8_t
+#include<stdint.h> // To use uint8_t
 /* */
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -15,7 +15,7 @@
 #define DEVICE "eth0"
 #define BUF_SIZE 64
 #define MAX_LEN 68
-#define MAX_MSG_LEN 500 // ERRADO, calcular depois.
+#define MAX_MSG_LEN 500 // Wrong, check it later.
 
 #define MASK_TAM 252
 #define MASK_SEQ 1008
