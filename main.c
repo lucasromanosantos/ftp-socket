@@ -24,6 +24,22 @@ int main(int argc, char *argv[]) {
             m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
             send_msg(socket, m);
+            int i,received = 0;
+            while(!received) {
+                int x;
+                for(x = 10000; x>0; x--); // Really really really bad timeout.
+                i = receive(socket, buffer, m);
+                if(i == 1) {
+                    if(m->attr.type == TYPE_ACK) {
+                        puts("Got an ack!");
+                        received = 1;
+                    }
+                    else {// if(m->attr.type == TYPE_NACK)
+                        puts("Got an nack!");
+                        send_msg(socket,m);
+                    }
+                }
+            }
         }
     }
     else if(strcmp(argv[1], "server") == 0) {
