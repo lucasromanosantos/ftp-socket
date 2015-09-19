@@ -1,7 +1,7 @@
 int print_message(Message *m) {
     int i;
-    printf("Mensagem:\n");
-    printf("Init: %u | Len: %d | Seq: %d | Type: %d | Msg: %s | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+    printf("\tMensagem:\n");
+    printf("\tInit: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
     return 1;
 }
 
@@ -52,7 +52,7 @@ Message* str_to_msg(char* c) {
 Message prepare_msg(Attr attr, unsigned char *data) {
     Message *m;
     m = create_msg(attr.len);
-    printf("Criando mensagem... \n");
+    printf("\tCriando mensagem... \n");
     m->init = 0x7E; // 0111 1110
     m->attr.len = attr.len;
     m->attr.seq = attr.seq;
