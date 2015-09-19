@@ -1,11 +1,11 @@
 #include "utils.c"
 
-void send_ack() {
+void send_ack(int socket) {
     Message *m;
     m = create_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_ACK);
     *m = prepare_msg(attr,"");
-    send_msg(m);
+	send_msg(socket, m);
     print_message(m);
     return ;
 }
@@ -52,8 +52,34 @@ int receive(int socket, unsigned char *data, Message *m) {
         }
     }
 }
-/*
-DATA
+
+int receive2(int socket, unsigned char *data, Message *m) {
+    int retorno,rv;
+    struct pollfd ufds[1];
+    ufds[0].fd = socket;
+    ufds[0].events = POLLIN; // check for just normal data
+    rv = poll(ufds, 1, 3000); // -1 = Infinite timeout (for testing)
+    if(rv == -1)
+        error("Erro no poll");
+    else if (rv == 0) {
+        printf("Timeout! No data received");
+        return 0; // Fail
+    }
+    else {
+        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
+        int tmp_recv;
+        if(ufds[0].revents & POLLIN) {
+            tmp_recv = recv(socket, data, MAX_LEN, 0);
+            if(data[0] != 126) // 126 = 0111 1110
+                return 0; // Fail
+            m = str_to_msg(data);
+            print_message(m);
+            return 1; // Success
+        }
+    }
+}
+
+/*DATA
 ||||||||
 char* c = data;
 c++;
