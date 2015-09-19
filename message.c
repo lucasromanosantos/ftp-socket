@@ -19,7 +19,7 @@ int send_msg(int socket, Message *m) {
     // Actually send the message.
     while(length > 0) {
         n = send(socket, s, length, 0);
-        printf("%d bits enviados... \n", (int)n);
+        printf("\t%d bits enviados... \n", (int)n);
         if(n <= 0) break; // Error
         s += n;
         length -= n;
@@ -53,16 +53,17 @@ int receive(int socket, unsigned char *data, Message *m) {
     }
 }
 
-int receive2(int socket, unsigned char *data, Message *m) {
-    int retorno,rv;
+int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
+    int retorno,rv = 0;
     struct pollfd ufds[1];
     ufds[0].fd = socket;
     ufds[0].events = POLLIN; // check for just normal data
-    rv = poll(ufds, 1, 3000); // -1 = Infinite timeout (for testing)
+    rv = poll(ufds, 1, timeout); // -1 = Infinite timeout (for testing)
+    time_t start = time(NULL);
     if(rv == -1)
         error("Erro no poll");
     else if (rv == 0) {
-        printf("Timeout! No data received");
+        puts("\tTimeout! No data received! Is the server working?");
         return 0; // Fail
     }
     else {
@@ -72,8 +73,8 @@ int receive2(int socket, unsigned char *data, Message *m) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
             if(data[0] != 126) // 126 = 0111 1110
                 return 0; // Fail
-            m = str_to_msg(data);
-            print_message(m);
+            *m = str_to_msg(data);
+            //print_message(*m);
             return 1; // Success
         }
     }
