@@ -2,6 +2,12 @@
 #include "message.c"
 #include "rawsocket.c"
 
+// About parity:
+// It should be a vertical parity, between the 8 bits of each byte.
+// It should consider every byte: attr.length, attr.seq, attr.type, and all the data.
+// Maybe use a for. We will have to get each one separed by bits. How will we do this?
+// Maybe a union?
+
 int main(int argc, char *argv[]) {
     if(argc != 2) {
         printf("Error: Invalid number of arguments.\nYou should inform if its a client or a server.\n");
