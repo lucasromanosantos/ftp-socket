@@ -10,6 +10,16 @@ void send_ack(int socket) {
     return ;
 }
 
+void send_nack(int socket) {
+    Message *m;
+    m = create_msg(0); // No data in this message, so, its length is 0.
+    Attr attr = prepare_attr(0,0,TYPE_NACK);
+    *m = prepare_msg(attr,"");
+    send_msg(socket, m);
+    print_message(m);
+    return ;
+}
+
 int send_msg(int socket, Message *m) {
     int i,cont = 0;
     ssize_t n;
