@@ -61,6 +61,9 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
     //rv = poll(ufds, 1, timeout);
 	rv = poll(ufds, 1, -1);
     time_t start = time(NULL);
+    while(time(NULL) < start + 3 && rv <= 0) {
+        rv = poll(ufds,1,-1);
+    }
     if(rv == -1)
         error("Erro no poll");
     else if (rv == 0) {
