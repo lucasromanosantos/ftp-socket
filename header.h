@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdint.h> // To use uint8_t
 #include <time.h>
+#include <sys/types.h>
+#include <dirent.h>
 /* */
 #include <sys/types.h>
 #include <sys/socket.h>
