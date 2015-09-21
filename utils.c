@@ -20,8 +20,18 @@ int pot(int base, int exp) {
 /* Expected Parity:
 Init does not count.
 Length, sequency and type: (Using values 1, 1 and 9)
-0000 0100
-0001 1001
+0000 0100 - len + 2 bits seq
+0001 1001 - 4 bits seq + type
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
+0010 1001 - data
 0010 1001 // Character (in ASCII) from the message
 ---------
 0011 0100
@@ -40,7 +50,6 @@ unsigned char get_parity(Message *m) {
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
     res = c[0] ^ c[1];
-    //printf("\tConverting: %d-%d - Lenght:%da\n",(int)c[0],(int)c[1],(int)m->attr.len);
     print_message(m);
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
