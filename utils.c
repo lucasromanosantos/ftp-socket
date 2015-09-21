@@ -39,8 +39,8 @@ unsigned char get_parity(Message *m) {
     int i;
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
-    printf("\tConverting: %d-%d\n",(int)c[0],(int)c[1]);
     res = c[0] ^ c[1];
+    printf("\tConverting: %d-%d\n",(int)c[0],(int)c[1]);
     for(i=0; i < m->attr.len; i++)
         res = res ^ m->data[i];
     return res;
