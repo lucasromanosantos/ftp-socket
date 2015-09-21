@@ -37,7 +37,7 @@ int send_msg(int socket, Message *m) {
     return (n <= 0) ? - 1 : 0;
 }
 
-int receive(int socket, unsigned char *data, Message *m) {
+int receive(int socket, unsigned char *data, Message **m) {
     int retorno,rv;
     struct pollfd ufds[1];
     ufds[0].fd = socket;
@@ -56,8 +56,8 @@ int receive(int socket, unsigned char *data, Message *m) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
             if(data[0] != 126) // 126 = 0111 1110
                 return 0; // Fail
-            m = str_to_msg(data);
-            print_message(m);
+            *m = str_to_msg(data);
+            print_message(*m);
             return 1; // Success
         }
     }

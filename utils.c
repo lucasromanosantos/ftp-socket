@@ -40,9 +40,11 @@ unsigned char get_parity(Message *m) {
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
     res = c[0] ^ c[1];
-    printf("\tConverting: %d-%d\n",(int)c[0],(int)c[1]);
-    for(i=0; i < m->attr.len; i++)
+    //printf("\tConverting: %d-%d - Lenght:%da\n",(int)c[0],(int)c[1],(int)m->attr.len);
+    print_message(m);
+    for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
+    }
     return res;
 }
 
@@ -86,7 +88,7 @@ Message* str_to_msg(char* c) {
     if((m->data = malloc(m->attr.len)) == NULL)
         error("Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
-    m->par = c[strlen(c)];
+    m->par = c[strlen(c)-1];
     return m;
 }
 
