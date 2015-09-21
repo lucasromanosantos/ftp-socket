@@ -36,33 +36,12 @@ What I am doing with my function:
 */
 
 unsigned char get_parity(Message *m) {
-    /* This function will get a message and create a byte of parity of it. It will work in this way:
-    I will store the xor from all LSB bits in v[7], the next in v[6], and so on, until the xor of the MSB bits
-    is stored in v[1]. After that, I will dislocate them and create only one bit with the correct value.
-    */
-    int count,revcount,i,v[8] = {0,0,0,0,0,0,0,0}, mask;
-    int len = m->attr.len; // Just for saving words inside the code.
-    unsigned char res = 0,c[2]; // Do we need to use a cast?
-    // Ill start with the MSB bits.
-    for(count = 0,revcount = 7; count < 8; count++,revcount--) {
-        //printf("Counter: %d - Reverse Counter: %d\n",count,revcount);
-        mask = 1;
-        for(i=0; i<count; i++)
-            mask = mask << 1; // Mask will be a number that changes from 0000 0001, 0000 0010, 0000 0100, ..., 1000 0000
-        printf("My mask is: %d\n",mask);
-        memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
-        //v[revcount] = ((m->attr.len & mask) ^ (m->attr.seq & mask) ^ (m->attr.type & mask)); // Here we got the xor from attrs.
-        v[revcount] = ((v[revcount] & mask) ^ (c[0] & mask) ^ (c[1] & mask));
-        for(i=0; i < m->attr.len; i++) // Finishes the parity of the revcount bit by looking every data byte.
-            v[revcount] = v[revcount & mask] ^ (m->data[i] & mask);
-        // Parity is a bit or a byte? I mean, is it the horizontal parity with all the 8 bits I got?
-        // Or is it all the 8 bits? I think its all the 8 bits, so, I will implement that way.
-        // Anyway, we should still check it!
-        //printf("%d---",v[count]);
-        res += v[revcount] * pot(2,count); // This should (not tested) move the bit to the <<
-                                           // how many times it has to be moved.
-    }
-    printf("\n");
+    int i;
+    unsigned char res = 0,c[2];
+    memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
+    res = c[1] ^ c[2];
+    for(i=0; i < m->attr.len; i++)
+        res = res ^ m->data[i];
     return res;
 }
 
