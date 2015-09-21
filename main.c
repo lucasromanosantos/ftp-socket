@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
             m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
             printf("Parity test: %d-%c\n", (int)get_parity(m), get_parity(m));
+            m->par = 248;
             send_msg(socket, m);
 		    // Message sent. Waiting for response.
 		    // Recv_tm is a temp function to the timeout of nack / ack. Since soon we'll not
