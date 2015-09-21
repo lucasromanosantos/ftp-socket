@@ -5,7 +5,7 @@ void send_ack(int socket) {
     m = create_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_ACK);
     *m = prepare_msg(attr,"");
-	send_msg(socket, m);
+    send_msg(socket, m);
     print_message(m);
     return ;
 }
@@ -58,7 +58,8 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
     struct pollfd ufds[1];
     ufds[0].fd = socket;
     ufds[0].events = POLLIN; // check for just normal data
-    rv = poll(ufds, 1, timeout); // -1 = Infinite timeout (for testing)
+    //rv = poll(ufds, 1, timeout);
+	rv = poll(ufds, 1, -1);
     time_t start = time(NULL);
     if(rv == -1)
         error("Erro no poll");
@@ -71,8 +72,9 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
-            if(data[0] != 126) // 126 = 0111 1110
-                return 0; // Fail
+            if(data[0] != 126) {// 126 = 0111 1110
+		return 0; // Fail
+            }
             *m = str_to_msg(data);
             //print_message(*m);
             return 1; // Success
