@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
             Message *m;
             m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
-            printf("Parity test: %d-%c\n", (int)get_parity(m), get_parity(m));
+            printf("\tParity test: %d-%c\n", (int)get_parity(m), get_parity(m));
             send_msg(socket, m);
 		    // Message sent. Waiting for response.
 		    // Recv_tm is a temp function to the timeout of nack / ack. Since soon we'll not
@@ -76,10 +76,17 @@ int main(int argc, char *argv[]) {
         if((buffer = malloc(MAX_MSG_LEN)) == NULL)
             error("Error allocating memory.");
         Message *m;
+        char par;
         int res = 0;
         while(1) {
             res = receive(socket, buffer, m);
             if(res == 1) {
+                par = get_parity(m);
+                if(par != m->par) {
+                    printf("\tError in parity! Please resend the message!\nSending nack...\n");
+                    send_nack(socket);
+                    printf("\tNack sent.");
+                }
                 puts("Sending acknowledge...");
                 send_ack(socket); // now with "socket" parameter we missed!
                 puts("Ack sent.");
