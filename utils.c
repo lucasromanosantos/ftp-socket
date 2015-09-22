@@ -22,16 +22,6 @@ Init does not count.
 Length, sequency and type: (Using values 1, 1 and 9)
 0000 0100 - len + 2 bits seq
 0001 1001 - 4 bits seq + type
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
-0010 1001 - data
 0010 1001 // Character (in ASCII) from the message
 ---------
 0011 0100
