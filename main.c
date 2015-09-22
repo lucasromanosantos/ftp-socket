@@ -2,6 +2,12 @@
 #include "message.c"
 #include "rawsocket.c"
 
+// About parity:
+// It should be a vertical parity, between the 8 bits of each byte.
+// It should consider every byte: attr.length, attr.seq, attr.type, and all the data.
+// Maybe use a for. We will have to get each one separed by bits. How will we do this?
+// Maybe a union?
+
 int main(int argc, char *argv[]) {
     if(argc != 2) {
         printf("Error: Invalid number of arguments.\nYou should inform if its a client or a server.\n");
@@ -24,6 +30,7 @@ int main(int argc, char *argv[]) {
             Message *m;
             m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
+            printf("\tParity test: %d-%c\n", (int)get_parity(m), get_parity(m));
             send_msg(socket, m);
 		    // Message sent. Waiting for response.
 		    // Recv_tm is a temp function to the timeout of nack / ack. Since soon we'll not
@@ -31,7 +38,7 @@ int main(int argc, char *argv[]) {
             int i = 0;
 			int waiting = 1;
             puts("Waiting for response...");
-			
+
 			time_t seconds = 3;
 			time_t endwait;
 			endwait = time(NULL) + seconds;
@@ -76,13 +83,23 @@ int main(int argc, char *argv[]) {
         if((buffer = malloc(MAX_MSG_LEN)) == NULL)
             error("Error allocating memory.");
         Message *m;
+        unsigned char par;
         int res = 0;
         while(1) {
-            res = receive(socket, buffer, m);
+            res = receive(socket, buffer, &m);
             if(res == 1) {
-                puts("Sending acknowledge...");
-                send_ack(socket);
-                puts("Ack sent.");
+                printf("Parity received: %d\n",m->par);
+                par = get_parity(m);
+                if(par != m->par) {
+                    printf("\tError in parity! Please resend the message!\nSending nack...\n");
+                    send_nack(socket);
+                    printf("\tNack sent.");
+                }
+                else {
+                    puts("Sending acknowledge...");
+                    send_ack(socket); // now with "socket" parameter we missed!
+                    puts("Ack sent.");
+                }
             }
         }
     }
