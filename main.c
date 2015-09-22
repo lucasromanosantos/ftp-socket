@@ -24,13 +24,12 @@ int main(int argc, char *argv[]) {
         if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
             error("Unable to allocate memory.");
         while(1) {
-            scanf("%s", buffer);
+            scanf("%500s", buffer);
             puts("Sending...");
             Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
             Message *m;
             m = create_msg(attrs.len + 5);
             *m = prepare_msg(attrs, buffer);
-            printf("\tParity test: %d-%c\n", (int)get_parity(m), get_parity(m));
             send_msg(socket, m);
 		    // Message sent. Waiting for response.
 		    // Recv_tm is a temp function to the timeout of nack / ack. Since soon we'll not

@@ -24,8 +24,8 @@ int send_msg(int socket, Message *m) {
     int i,cont = 0;
     ssize_t n;
     size_t length = msg_length(m) * 8;
-    Message *p = m;
-    char *s = msg_to_str(p);
+    char *s = msg_to_str(m);
+    print_message(m);
     // Actually send the message.
     while(length > 0) {
         n = send(socket, s, length, 0);
