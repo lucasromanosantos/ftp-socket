@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
         DIR *dp;
         struct dirent *ep;
         char *c = malloc(100);
-        scanf("%s",&c);
+        scanf("%s",c);
         dp = opendir("./");
         if (dp != NULL) {
                 while (ep = readdir (dp))
