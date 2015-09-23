@@ -119,20 +119,11 @@ int main(int argc, char *argv[]) {
         }
     }
     else if(strcmp(argv[1], "ls") == 0) {
-        DIR *dp;
-        struct dirent *ep;
-        char *c = malloc(100);
-        scanf("%s",c);
-        dp = opendir("./");
-        if (dp != NULL) {
-                while (ep = readdir (dp))
-                    puts (ep->d_name);
-                (void) closedir (dp);
-        }
-        else
-          perror ("Couldn't open the directory");
-
-        return 0;
+	char *result = malloc(1024);
+	get_files(".", result);
+	printf("test strlen: %d \n \n", (int)strlen(result));
+			
+	printf("LIST OF FILES: %s \n", result);
     }
     return 1;
 }
