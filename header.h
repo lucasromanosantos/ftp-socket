@@ -6,15 +6,14 @@
 #include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
-/* */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <linux/if.h>
-
-#include<sys/poll.h>
+#include <sys/poll.h>
 
 #define DEVICE "eth0"
 #define BUF_SIZE 64
