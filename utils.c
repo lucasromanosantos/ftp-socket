@@ -1,8 +1,73 @@
+#include <math.h>
+
 int print_message(Message *m) {
-    int i;
-    printf("\tMensagem:\n");
-    printf("\tInit: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+    printf("\tMsg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
     return 1;
+}
+
+// L
+
+int get_files(char *path, char *c) {
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir(path);
+	if(dp != NULL) {
+		c = strcpy(c, "\n"); // starting the buffer with something to use strcat. Maybe not the best way
+		while(ep = readdir(dp)) {
+			char tmp[ep->d_reclen]; // returns size of record
+			strcpy(tmp, ep->d_name);
+			strcat(tmp, "\n");		// these 3 lines to concat "\n". Maybe we can find a better way
+			strcat(c, tmp);
+		}
+		(void) closedir(dp);
+		return 1;
+	}
+	else {
+		puts("Error! Could not open the directory");
+		return 0;
+	}
+}
+
+// 
+
+int pot(int base, int exp) {
+    if(exp < 0)
+        return 0;
+    if(exp == 0)
+        return 1;
+    if(exp == 1)
+        return base;
+    return base * pot(base, exp-1);
+}
+
+/* Expected Parity:
+Init does not count.
+Length, sequency and type: (Using values 1, 1 and 9)
+0000 0100 - len + 2 bits seq
+0001 1001 - 4 bits seq + type
+0010 1001 // Character (in ASCII) from the message
+---------
+0011 0100
+
+What I am doing with my function:
+  0000 01
+  0000 01
+     1001
+0010 1001
+---------
+0010 0001
+*/
+
+unsigned char get_parity(Message *m) {
+    int i;
+    unsigned char res = 0,c[2];
+    memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
+    res = c[0] ^ c[1];
+    //print_message(m);
+    for(i=0; i < (int)m->attr.len; i++) {
+        res = res ^ m->data[i];
+    }
+    return res;
 }
 
 void error(const char *msg) {
@@ -45,7 +110,7 @@ Message* str_to_msg(char* c) {
     if((m->data = malloc(m->attr.len)) == NULL)
         error("Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
-    m->par = c[strlen(c)];
+    m->par = c[strlen(c)-1];
     return m;
 }
 
@@ -60,8 +125,8 @@ Message prepare_msg(Attr attr, unsigned char *data) {
     if((m->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
         error("Unable to allocate memory.");
     strcpy(m->data, data);  // This was throwing an unknown error. Any ideas why?
-    m->par = 0;
-    print_message(m);
+    //m->par = 0;
+    m->par = get_parity(m);
     return *m;
 }
 

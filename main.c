@@ -2,6 +2,12 @@
 #include "message.c"
 #include "rawsocket.c"
 
+// About parity:
+// It should be a vertical parity, between the 8 bits of each byte.
+// It should consider every byte: attr.length, attr.seq, attr.type, and all the data.
+// Maybe use a for. We will have to get each one separed by bits. How will we do this?
+// Maybe a union?
+
 int main(int argc, char *argv[]) {
     if(argc != 2) {
         printf("Error: Invalid number of arguments.\nYou should inform if its a client or a server.\n");
@@ -18,7 +24,7 @@ int main(int argc, char *argv[]) {
         if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
             error("Unable to allocate memory.");
         while(1) {
-            scanf("%s", buffer);
+            scanf("%500s", buffer);
             puts("Sending...");
             Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
             Message *m;
@@ -28,9 +34,16 @@ int main(int argc, char *argv[]) {
 		    // Message sent. Waiting for response.
 		    // Recv_tm is a temp function to the timeout of nack / ack. Since soon we'll not
             // have infinite (-1) timeout anymore, it may become the main one
-            int i,waiting = 1;
+            int i = 0;
+			int waiting = 1;
             puts("Waiting for response...");
-            i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+
+			time_t seconds = 3;
+			time_t endwait;
+			endwait = time(NULL) + seconds;
+			while (time(NULL) < endwait && i != 1) {
+				i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+			}
             // This variable will count a timeout. It will make us know when to stop Waiting
             // for a response from the server.
             time_t start = time(NULL);
@@ -69,13 +82,23 @@ int main(int argc, char *argv[]) {
         if((buffer = malloc(MAX_MSG_LEN)) == NULL)
             error("Error allocating memory.");
         Message *m;
+        unsigned char par;
         int res = 0;
         while(1) {
-            res = receive(socket, buffer, m);
+            res = receive(socket, buffer, &m);
             if(res == 1) {
-                puts("Sending acknowledge...");
-                send_ack(socket); // now with "socket" parameter we missed!
-                puts("Ack sent.");
+                printf("Parity received: %d\n",m->par);
+                par = get_parity(m);
+                if(par != m->par) {
+                    printf("\tError in parity! Please resend the message!\nSending nack...\n");
+                    send_nack(socket);
+                    printf("\tNack sent.");
+                }
+                else {
+                    puts("Sending acknowledge...");
+                    send_ack(socket); // now with "socket" parameter we missed!
+                    puts("Ack sent.");
+                }
             }
         }
     }
@@ -95,20 +118,11 @@ int main(int argc, char *argv[]) {
         }
     }
     else if(strcmp(argv[1], "ls") == 0) {
-        DIR *dp;
-        struct dirent *ep;
-        char *c = malloc(100);
-        scanf("%s",&c);
-        dp = opendir("./");
-        if (dp != NULL) {
-                while (ep = readdir (dp))
-                    puts (ep->d_name);
-                (void) closedir (dp);
-        }
-        else
-          perror ("Couldn't open the directory");
-
-        return 0;
+	char *result = malloc(1024);
+	get_files(".", result);
+	printf("test strlen: %d \n \n", (int)strlen(result));
+			
+	printf("LIST OF FILES: %s \n", result);
     }
     return 1;
 }

@@ -5,7 +5,17 @@ void send_ack(int socket) {
     m = create_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_ACK);
     *m = prepare_msg(attr,"");
-	send_msg(socket, m);
+    send_msg(socket, m);
+    print_message(m);
+    return ;
+}
+
+void send_nack(int socket) {
+    Message *m;
+    m = create_msg(0); // No data in this message, so, its length is 0.
+    Attr attr = prepare_attr(0,0,TYPE_NACK);
+    *m = prepare_msg(attr,"");
+    send_msg(socket, m);
     print_message(m);
     return ;
 }
@@ -14,8 +24,8 @@ int send_msg(int socket, Message *m) {
     int i,cont = 0;
     ssize_t n;
     size_t length = msg_length(m) * 8;
-    Message *p = m;
-    char *s = msg_to_str(p);
+    char *s = msg_to_str(m);
+    print_message(m);
     // Actually send the message.
     while(length > 0) {
         n = send(socket, s, length, 0);
@@ -27,7 +37,7 @@ int send_msg(int socket, Message *m) {
     return (n <= 0) ? - 1 : 0;
 }
 
-int receive(int socket, unsigned char *data, Message *m) {
+int receive(int socket, unsigned char *data, Message **m) {
     int retorno,rv;
     struct pollfd ufds[1];
     ufds[0].fd = socket;
@@ -46,8 +56,8 @@ int receive(int socket, unsigned char *data, Message *m) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
             if(data[0] != 126) // 126 = 0111 1110
                 return 0; // Fail
-            m = str_to_msg(data);
-            print_message(m);
+            *m = str_to_msg(data);
+            print_message(*m);
             return 1; // Success
         }
     }
@@ -58,7 +68,8 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
     struct pollfd ufds[1];
     ufds[0].fd = socket;
     ufds[0].events = POLLIN; // check for just normal data
-    rv = poll(ufds, 1, timeout); // -1 = Infinite timeout (for testing)
+    //rv = poll(ufds, 1, timeout);
+	rv = poll(ufds, 1, -1);
     time_t start = time(NULL);
     while(time(NULL) < start + 3 && rv <= 0) {
         rv = poll(ufds,1,-1);
@@ -74,8 +85,9 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
-            if(data[0] != 126) // 126 = 0111 1110
-                return 0; // Fail
+            if(data[0] != 126) {// 126 = 0111 1110
+		return 0; // Fail
+            }
             *m = str_to_msg(data);
             //print_message(*m);
             return 1; // Success
