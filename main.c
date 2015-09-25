@@ -5,10 +5,7 @@
 #include "client.c"
 
 void operate_ls(int socket) {
-	char *result = malloc(1024);
-	get_files(".", result);
-	printf("test strlen: %d \n \n", (int)strlen(result));
-	printf("LIST OF FILES: %s \n", result);
+	send_ls(socket);
 }
 
 void operate_alone(int socket) {

@@ -108,6 +108,7 @@ void send_ls(int socket) {
 			break;
 		seq += 1;
 	}
+    printf("final sequence: %d \n", seq);
 }
 
 int receive(int socket, unsigned char *data, Message **m) {
