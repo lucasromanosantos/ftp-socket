@@ -1,11 +1,30 @@
 #include <math.h>
 
 int print_message(Message *m) {
-    int i;
-    printf("\tMensagem:\n");
-    printf("\tInit: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+    printf("\tMsg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
     return 1;
 }
+
+int get_files(char *path, char *c) {
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir(path);
+	if(dp != NULL) {
+		c = strcpy(c, ""); // starting the buffer with something to use strcat. Maybe not the best way
+		while(ep = readdir(dp)) {
+            strcat(c, ep->d_name);
+            strcat(c, "\'");
+		}
+		(void) closedir(dp);
+		return 1;
+	}
+	else {
+		puts("Error! Could not open the directory");
+		return 0;
+	}
+}
+
+//
 
 int pot(int base, int exp) {
     if(exp < 0)
@@ -40,7 +59,7 @@ unsigned char get_parity(Message *m) {
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
     res = c[0] ^ c[1];
-    print_message(m);
+    //print_message(m);
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
@@ -104,7 +123,6 @@ Message prepare_msg(Attr attr, unsigned char *data) {
     strcpy(m->data, data);  // This was throwing an unknown error. Any ideas why?
     //m->par = 0;
     m->par = get_parity(m);
-    print_message(m);
     return *m;
 }
 
@@ -114,4 +132,15 @@ Attr prepare_attr(int length,int seq,int type) {
     a.seq = seq;
     a.type = type;
     return a;
+}
+
+int load_interface() {
+    int i;
+    printf("Escolha o que voce deseja fazer:\n");
+    printf("\t1- Ls remoto,\n");
+    printf("\t2- Cd remoto,\n");
+    printf("\t3- Enviar arquivo,\n");
+    printf("\t4- Puxar arquivo.\n");
+    scanf(%d, &i); 
+    return d;
 }

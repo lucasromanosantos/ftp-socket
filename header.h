@@ -6,19 +6,19 @@
 #include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
-/* */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <linux/if.h>
-
-#include<sys/poll.h>
+#include <sys/poll.h>
 
 #define DEVICE "eth0"
 #define BUF_SIZE 64
 #define MAX_LEN 68
+#define MIN_LEN 5 //wrong? check later
 #define MAX_MSG_LEN 500 // Wrong, check it later.
 #define STD_TIMEOUT 3000
 
