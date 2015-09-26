@@ -71,6 +71,7 @@ int listen_ls(int socket) {
             size += m->attr.len;
             c = realloc(c,sizeof(char) * size);
             c[strlen(c)] = strcpy(m->data);
+            send_ack(socket);
         }
         m = wait_data(socket);
     }
