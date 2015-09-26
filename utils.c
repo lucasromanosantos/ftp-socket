@@ -141,6 +141,6 @@ int load_interface() {
     printf("\t2- Cd remoto,\n");
     printf("\t3- Enviar arquivo,\n");
     printf("\t4- Puxar arquivo.\n");
-    scanf(%d, &i); 
-    return d;
+    scanf("%d", &i); 
+    return i;
 }

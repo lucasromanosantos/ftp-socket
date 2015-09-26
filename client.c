@@ -36,10 +36,10 @@ void operate_client(int socket) {
 
 int req_ls(int socket) {
     Message *m;
-    Attr attr;
+    Attr attrs;
     int i;
     m = create_msg(0); // Data is empty
-    attr = prepare_attr(0,0,TYPE_LS);
+    attrs = prepare_attr(0,0,TYPE_LS);
     *m = prepare_msg(attrs, "");
     send_msg(socket, m);
     puts("Waiting for ls response..."); // Wait for an ACK
@@ -55,27 +55,6 @@ int req_ls(int socket) {
         puts("Panic!!");
         exit(1);
     }
-}
-
-int listen_ls(int socket) {
-    Message *m;
-    unsigned char *c;
-    int size = 0;
-    c = malloc(sizeof(char) * size);
-    m = create_msg(63); // Maximum length
-    m = wait_data(socket);
-    while (m->attr.type != TYPE_END) {
-        if(m->attr.type == TYPE_ERROR) {
-            puts("Problem receiving message.");
-        } else if (m->attr.type == TYPE_SHOWSCREEN) {
-            size += m->attr.len;
-            c = realloc(c,sizeof(char) * size);
-            c[strlen(c)] = strcpy(m->data);
-            send_ack(socket);
-        }
-        m = wait_data(socket);
-    }
-    puts(c);
 }
 
 Message* wait_data(int socket) {
@@ -99,4 +78,26 @@ Message* wait_data(int socket) {
         m->attr = prepare_attr(0,0,TYPE_ERROR);
         return m;
     }
+}
+
+int listen_ls(int socket) {
+    Message *m;
+    unsigned char *c;
+    int size = 0;
+    c = malloc(sizeof(char) * size);
+    m = create_msg(63); // Maximum length
+    m = wait_data(socket);
+    while (m->attr.type != TYPE_END) {
+        if(m->attr.type == TYPE_ERROR) {
+            puts("Problem receiving message.");
+        } else if (m->attr.type == TYPE_SHOWSCREEN) {
+            size += m->attr.len;
+            c = realloc(c,sizeof(char) * size);
+            //c[strlen(c)] = strcpy(m->data); ??
+            strcat(c, m->data);
+            send_ack(socket);
+        }
+        m = wait_data(socket);
+    }
+    puts(c);
 }

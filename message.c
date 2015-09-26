@@ -69,51 +69,6 @@ int send_msg(int socket, Message *m) {
     return (n <= 0) ? - 1 : 0;
 }
 
-void send_ls(int socket) {
-	char *result = malloc(1024); // temp size.. realloc maybe??
-	unsigned char *buffer;
-	if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-		puts("unable to allocate memory");
-		return;
-	}
-	get_files(".", result);
-	size_t nob = strlen(result); // nob = number of bytes
-    puts(result);
-	printf("size of total nob: %d \n", (int) nob);
-    int seq = 0;
-
-	Message *m; // check allocation / realloc???
-	Attr attrs;
-	while(nob > 0) {
-		if(nob >= 63) {
-			char tmp[64];
-			attrs = prepare_attr(63, seq, TYPE_LS);
-			m = create_msg(attrs.len);
-			strncpy(tmp, result, 63);
-			printf("test string recortada: %s \n", tmp);
-			*m = prepare_msg(attrs, tmp);
-			send_msg(socket, m);
-			result += 63; // add 63 bytes to result pointer
-			nob -= 63;
-		}
-		else {
-			char tmp[nob + 1];
-			attrs = prepare_attr(nob, seq, TYPE_LS);
-			m = create_msg(attrs.len); // ou nob
-			strncpy(tmp, result, nob);
-			printf("test string recortada: %s \n", tmp);
-			*m = prepare_msg(attrs, tmp);
-			send_msg(socket, m);
-			//result -= nob;
-			nob = 0;
-		}
-		if(!wait_response(socket)) // fast test	
-			break;
-		seq += 1;
-	}
-    printf("final sequence: %d \n", seq);
-}
-
 int receive(int socket, unsigned char *data, Message **m) {
     int retorno,rv;
     struct pollfd ufds[1];
