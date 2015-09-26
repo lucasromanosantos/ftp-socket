@@ -13,7 +13,7 @@ int get_files(char *path, char *c) {
 		c = strcpy(c, ""); // starting the buffer with something to use strcat. Maybe not the best way
 		while(ep = readdir(dp)) {
             strcat(c, ep->d_name);
-            strcat(c, "\n");
+            strcat(c, "\'");
 		}
 		(void) closedir(dp);
 		return 1;
@@ -132,4 +132,15 @@ Attr prepare_attr(int length,int seq,int type) {
     a.seq = seq;
     a.type = type;
     return a;
+}
+
+int load_interface() {
+    int i;
+    printf("Escolha o que voce deseja fazer:\n");
+    printf("\t1- Ls remoto,\n");
+    printf("\t2- Cd remoto,\n");
+    printf("\t3- Enviar arquivo,\n");
+    printf("\t4- Puxar arquivo.\n");
+    scanf(%d, &i); 
+    return d;
 }

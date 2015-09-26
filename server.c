@@ -17,7 +17,7 @@ void operate_server(int socket) {
             }
             else {
                 puts("Sending acknowledge...");
-                send_ack(socket); // now with "socket" parameter we missed!
+                send_ack(socket); // Now with "socket" parameter we missed!
                 puts("Ack sent.");
             }
         }

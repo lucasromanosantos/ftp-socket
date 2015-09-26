@@ -19,6 +19,7 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
 	endwait = time(NULL) + seconds;
 	int i;
 	Message *m; // check
+    m = create_msg(0);
 	while(time(NULL) < endwait && i != 1)
 		i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
 	if(i == 1) {
@@ -32,7 +33,7 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
 		}
 		else {
 			puts("Panic!!\n");
-			return 0;
+			return -1;
 		}
 	}
 	else {
@@ -77,31 +78,33 @@ void send_ls(int socket) {
 	}
 	get_files(".", result);
 	size_t nob = strlen(result); // nob = number of bytes
-	int seq = 0;
+    puts(result);
+	printf("size of total nob: %d \n", (int) nob);
+    int seq = 0;
 
 	Message *m; // check allocation / realloc???
 	Attr attrs;
 	while(nob > 0) {
-		if(nob >= 255) {
-			char tmp[255];
-			attrs = prepare_attr(255, seq, TYPE_LS);
+		if(nob >= 63) {
+			char tmp[64];
+			attrs = prepare_attr(63, seq, TYPE_LS);
 			m = create_msg(attrs.len);
-			strncpy(tmp, result, 255);
+			strncpy(tmp, result, 63);
 			printf("test string recortada: %s \n", tmp);
 			*m = prepare_msg(attrs, tmp);
 			send_msg(socket, m);
-			*result += 255; // add 255 bytes to result pointer
-			nob -= 255;
+			result += 63; // add 63 bytes to result pointer
+			nob -= 63;
 		}
 		else {
-			char tmp[nob];
+			char tmp[nob + 1];
 			attrs = prepare_attr(nob, seq, TYPE_LS);
 			m = create_msg(attrs.len); // ou nob
 			strncpy(tmp, result, nob);
 			printf("test string recortada: %s \n", tmp);
 			*m = prepare_msg(attrs, tmp);
 			send_msg(socket, m);
-			*result -= nob;
+			//result -= nob;
 			nob = 0;
 		}
 		if(!wait_response(socket)) // fast test	
