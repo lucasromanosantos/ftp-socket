@@ -10,6 +10,38 @@ void send_ack(int socket) {
     return ;
 }
 
+int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
+	unsigned char *buffer;
+	if((buffer = malloc(MIN_LEN)) == NULL)
+		return 0;
+	time_t seconds = 3;
+	time_t endwait;
+	endwait = time(NULL) + seconds;
+	int i;
+	Message *m; // check
+    m = create_msg(0);
+	while(time(NULL) < endwait && i != 1)
+		i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+	if(i == 1) {
+		if(m->attr.type == TYPE_ACK) {
+			puts("Got an ack! \n");
+			return 1;
+		}
+		else if(m->attr.type == TYPE_NACK) {
+			puts("Got a nack! \n");
+			return 0;
+		}
+		else {
+			puts("Panic!!\n");
+			return -1;
+		}
+	}
+	else {
+		puts("Error! Timeout? \n");
+		return 0;
+	}
+}
+
 void send_nack(int socket) {
     Message *m;
     m = create_msg(0); // No data in this message, so, its length is 0.

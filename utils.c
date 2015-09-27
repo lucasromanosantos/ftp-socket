@@ -5,19 +5,15 @@ int print_message(Message *m) {
     return 1;
 }
 
-// L
-
 int get_files(char *path, char *c) {
 	DIR *dp;
 	struct dirent *ep;
 	dp = opendir(path);
 	if(dp != NULL) {
-		c = strcpy(c, "\n"); // starting the buffer with something to use strcat. Maybe not the best way
+		c = strcpy(c, ""); // starting the buffer with something to use strcat. Maybe not the best way
 		while(ep = readdir(dp)) {
-			char tmp[ep->d_reclen]; // returns size of record
-			strcpy(tmp, ep->d_name);
-			strcat(tmp, "\n");		// these 3 lines to concat "\n". Maybe we can find a better way
-			strcat(c, tmp);
+            strcat(c, ep->d_name);
+            strcat(c, "\'");
 		}
 		(void) closedir(dp);
 		return 1;
@@ -28,7 +24,7 @@ int get_files(char *path, char *c) {
 	}
 }
 
-// 
+//
 
 int pot(int base, int exp) {
     if(exp < 0)
@@ -136,4 +132,15 @@ Attr prepare_attr(int length,int seq,int type) {
     a.seq = seq;
     a.type = type;
     return a;
+}
+
+int load_interface() {
+    int i;
+    printf("Escolha o que voce deseja fazer:\n");
+    printf("\t1- Ls remoto,\n");
+    printf("\t2- Cd remoto,\n");
+    printf("\t3- Enviar arquivo,\n");
+    printf("\t4- Puxar arquivo.\n");
+    scanf("%d", &i); 
+    return i;
 }
