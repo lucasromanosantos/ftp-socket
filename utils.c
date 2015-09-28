@@ -84,6 +84,12 @@ int msg_length(Message *m) {
     return   1 +  2 + strlen(m->data) + 1 + 1;
 }
 
+size_t strlen2(const char *p) {
+    size_t result = 2; // two first bytes of nack are 0000 0000
+    while(p[result] != '\0') ++result;
+    return result;
+}
+
 char* msg_to_str(Message *m) {
     int i,pos;
     unsigned char *c;
@@ -99,14 +105,14 @@ char* msg_to_str(Message *m) {
 
 Message* str_to_msg(char* c) {
     Message *m;
-    m = create_msg(strlen(c)-5); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
+    m = create_msg(strlen2(c)-5); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
     // Ok, maybe strlen is not thaaat wrong. In fact, its probably correct. Someone should revise it.
     m->init = c[0];
     memcpy(&m->attr, c+1, 2);
     if((m->data = malloc(m->attr.len)) == NULL)
         error("Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
-    m->par = c[strlen(c)-1];
+    m->par = c[strlen2(c)-1];
     return m;
 }
 

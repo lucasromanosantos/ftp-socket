@@ -44,15 +44,17 @@ int req_ls(int socket) {
     send_msg(socket, m);
     puts("Waiting for ls response..."); // Wait for an ACK
     i = wait_response(socket);
+
+    int seq; // message sequence
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
-        puts("Got an ack.");
+        puts("Got an ack!! Now receiving data\n");
         return 1;
     } else if(i == 0) { // Got an NACK
         puts("Got an nack.");
         return 0;
     } else { // Panic!
-        puts("Panic!!");
+        puts("Panic!!2");
         exit(1);
     }
 }
@@ -84,7 +86,8 @@ int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
     int size = 0;
-    c = malloc(sizeof(char) * size);
+    //c = malloc(sizeof(char) * size); // have to start with min length
+    c = malloc(MAX_LEN);
     m = create_msg(63); // Maximum length
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
