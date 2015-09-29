@@ -20,7 +20,7 @@ void send_ls(int socket) {
             m = create_msg(attrs.len);
             strncpy(tmp, result, 63);
             printf("test string recortada: %s \n", tmp);
-            *m = prepare_msg(attrs, tmp);
+            m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
             result += 63; // add 63 bytes to result pointer
             nob -= 63;
@@ -31,12 +31,12 @@ void send_ls(int socket) {
             m = create_msg(attrs.len); // ou nob
             strncpy(tmp, result, nob);
             printf("test string recortada: %s \n", tmp);
-            *m = prepare_msg(attrs, tmp);
+            m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
             //result -= nob;
             nob = 0;
         }
-        if(!wait_response(socket)) // fast test 
+        if(!wait_response(socket)) // fast test
             break;
         seq += 1;
     }

@@ -58,11 +58,15 @@ unsigned char get_parity(Message *m) {
     int i;
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
+    printf("Parity inside get_parity: %c == %d\n",res,(int)res);
+    printf("co = %c == %d, c1 = %c == %d",c[0],(int)c[0],c[1],(int)c[1]);
     res = c[0] ^ c[1];
     //print_message(m);
+    printf("Parity inside get_parity: %c == %d\n",res,(int)res);
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
+    printf("Parity inside get_parity: %c == %d\n",res,(int)res);
     return res;
 }
 
@@ -110,7 +114,7 @@ Message* str_to_msg(char* c) {
     return m;
 }
 
-Message prepare_msg(Attr attr, unsigned char *data) {
+Message* prepare_msg(Attr attr, unsigned char *data) {
     Message *m;
     m = create_msg(attr.len);
     printf("\tCriando mensagem... \n");
@@ -118,12 +122,12 @@ Message prepare_msg(Attr attr, unsigned char *data) {
     m->attr.len = attr.len;
     m->attr.seq = attr.seq;
     m->attr.type = attr.type;
-    if((m->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
+    if((m->data = malloc(sizeof(char) * (attr.len))) == NULL)
         error("Unable to allocate memory.");
     strcpy(m->data, data);  // This was throwing an unknown error. Any ideas why?
     //m->par = 0;
     m->par = get_parity(m);
-    return *m;
+    return m;
 }
 
 Attr prepare_attr(int length,int seq,int type) {
@@ -136,11 +140,11 @@ Attr prepare_attr(int length,int seq,int type) {
 
 int load_interface() {
     int i;
-    printf("Escolha o que voce deseja fazer:\n");
-    printf("\t1- Ls remoto,\n");
-    printf("\t2- Cd remoto,\n");
-    printf("\t3- Enviar arquivo,\n");
-    printf("\t4- Puxar arquivo.\n");
-    scanf("%d", &i); 
+    printf("What would you like to do ?\n");
+    printf("\t1- Remote ls.\n");
+    printf("\t2- Remote cd.\n");
+    printf("\t3- Send file.\n");
+    printf("\t4- Get file.\n");
+    scanf("%d", &i);
     return i;
 }

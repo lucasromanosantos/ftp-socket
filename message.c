@@ -4,7 +4,7 @@ void send_ack(int socket) {
     Message *m;
     m = create_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_ACK);
-    *m = prepare_msg(attr,"");
+    m = prepare_msg(attr,"0");
     send_msg(socket, m);
     print_message(m);
     return ;
@@ -12,7 +12,7 @@ void send_ack(int socket) {
 
 int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
 	unsigned char *buffer;
-	if((buffer = malloc(MIN_LEN)) == NULL)
+	if((buffer = malloc(1024)) == NULL)
 		return 0;
 	time_t seconds = 3;
 	time_t endwait;
@@ -46,7 +46,7 @@ void send_nack(int socket) {
     Message *m;
     m = create_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_NACK);
-    *m = prepare_msg(attr,"");
+    m = prepare_msg(attr,"");
     send_msg(socket, m);
     print_message(m);
     return ;
@@ -57,6 +57,10 @@ int send_msg(int socket, Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
+    //print_message(m);
+    puts(s);
+    for(i=0; i<strlen(s); i++)
+        printf("===%d",(int)s[i]);
     print_message(m);
     // Actually send the message.
     while(length > 0) {

@@ -18,7 +18,7 @@ void operate_alone(int socket) {
         Message *m;
         Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
         m = create_msg(attrs.len + 5);
-        *m = prepare_msg(attrs, buffer);
+        m = prepare_msg(attrs, buffer);
         buffer = msg_to_str(m);
         m = str_to_msg(buffer);
         print_message(m);
