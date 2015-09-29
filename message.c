@@ -10,6 +10,16 @@ void send_ack(int socket) {
     return ;
 }
 
+void send_nack(int socket) {
+    Message *m;
+    m = create_msg(0); // No data in this message, so, its length is 0.
+    Attr attr = prepare_attr(0,0,TYPE_NACK);
+    *m = prepare_msg(attr,"");
+    send_msg(socket, m);
+    print_message(m);
+    return ;
+}
+
 int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
 	unsigned char *buffer;
 	if((buffer = malloc(MIN_LEN)) == NULL)
@@ -40,16 +50,6 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
 		puts("Error! Timeout? \n");
 		return 0;
 	}
-}
-
-void send_nack(int socket) {
-    Message *m;
-    m = create_msg(0); // No data in this message, so, its length is 0.
-    Attr attr = prepare_attr(0,0,TYPE_NACK);
-    *m = prepare_msg(attr,"");
-    send_msg(socket, m);
-    print_message(m);
-    return ;
 }
 
 int send_msg(int socket, Message *m) {
@@ -118,10 +118,9 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
             if(data[0] != 126) {// 126 = 0111 1110
-		return 0; // Fail
+		      return 0; // Fail
             }
             *m = str_to_msg(data);
-            //print_message(*m);
             return 1; // Success
         }
     }
