@@ -1,5 +1,12 @@
 #include <math.h>
 
+void flush_buf() {
+    // Removes a remaining \n (in case we do a scanf("%d"))
+    char c;
+    while((c = getchar()) != '\n');
+    return ;
+}
+
 int print_message(Message *m) {
     printf("\tMsg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
     return 1;
