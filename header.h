@@ -18,6 +18,7 @@
 #define DEVICE "eth0"
 #define BUF_SIZE 64
 #define MAX_LEN 68
+#define MAX_DATA_LEN 63
 #define MIN_LEN 5 //wrong? check later
 #define MAX_MSG_LEN 500 // Wrong, check it later.
 #define STD_TIMEOUT 3000

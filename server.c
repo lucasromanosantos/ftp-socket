@@ -18,7 +18,6 @@ void send_ls(int socket) {
             attrs = prepare_attr(63, seq, TYPE_LS);
             m = malloc_msg(attrs.len);
             strncpy(tmp, result, 63);
-            printf("test string recortada: %s \n", tmp);
             m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
             result += 63; // add 63 bytes to result pointer
@@ -29,11 +28,17 @@ void send_ls(int socket) {
             attrs = prepare_attr(nob, seq, TYPE_LS);
             m = malloc_msg(attrs.len); // ou nob
             strncpy(tmp, result, nob);
-            printf("test string recortada: %s \n", tmp);
             m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
             //result -= nob;
             nob = 0;
+
+            if(wait_response(socket)) {
+                attrs = prepare_attr(0, 0, TYPE_END);
+                m = malloc_msg(0);
+                m = prepare_msg(attrs, "");
+                send_msg(socket, m);
+            }
         }
         if(!wait_response(socket)) // fast test
             break;

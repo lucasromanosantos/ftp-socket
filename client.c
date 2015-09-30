@@ -1,29 +1,13 @@
 void send_filesize(int socket);
 
 void operate_client(int socket) {
-    unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("Unable to allocate memory.");
     while(1) {
-        /* buffer = fgets(buffer, BUF_SIZE, stdin);
-        buffer[strlen(buffer)-1] = '\0'; // Removing the \n
-        puts("Sending...");
-        Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
-        Message *m;
-        m = malloc_msg(attrs.len + 5);
-        m = prepare_msg(attrs, buffer);
-        send_msg(socket, m);
-        // Message sent. Waiting for response.
-        puts("Waiting for response...");
-        wait_response(socket); */
-
         int i = 0;
         while(i <= 0 || i >= 5) {
             i = load_interface();
             if(i == 1) {
                 flush_buf();
-                while(req_ls(socket) == 0)
-                    req_ls(socket);
+                while(req_ls(socket) == 0);
                 listen_ls(socket);
             } else if(i == 2) {
                 //req_cd(socket);
@@ -52,7 +36,6 @@ int req_ls(int socket) {
     i = wait_response(socket);
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
-        puts("Got an ack.");
         return 1;
     } else if(i == 0) { // Got an NACK
         //puts("Got an nack.");
@@ -61,6 +44,7 @@ int req_ls(int socket) {
         puts("Panic in req_ls!!");
         exit(1);
     }
+    free(m);
 }
 
 Message* wait_data(int socket) {
@@ -84,30 +68,34 @@ Message* wait_data(int socket) {
         m->attr = prepare_attr(0,0,TYPE_ERROR);
         return m;
     }
+    free(m);
 }
 
 int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
-    int size = 0;
+    int size = MAX_DATA_LEN + 1;
     //c = malloc(sizeof(char) * size); // have to start with min length
-    c = malloc(MAX_LEN);
-    m = malloc_msg(63); // Maximum length
+    c = malloc(size);
+    m = malloc_msg(MAX_DATA_LEN); // Maximum length
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
             puts("Problem receiving message.");
             send_nack(socket);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
-            size += m->attr.len;
+            size += (int) m->attr.len;
+            printf("size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
             //c[strlen(c)] = strcpy(m->data); ??
             strcat(c, m->data);
             send_ack(socket);
         }
         m = wait_data(socket);
+        free(c);
     }
     puts(c);
+    free(m);
 }
 
 void send_filesize(int socket) {

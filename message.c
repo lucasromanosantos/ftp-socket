@@ -91,8 +91,8 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
 	while(time(NULL) < endwait && i != 1)
 		i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
 	if(i == 1) {
-		if(m->attr.type == TYPE_ACK) {
-			puts("Got an ack! \n");
+		if(m->attr.type == TYPE_ACK) { // got ack
+			puts("Got an ack! \n"); 
 			return 1;
 		}
 		else if(m->attr.type == TYPE_NACK) {
@@ -115,7 +115,7 @@ int send_msg(int socket, Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    printf("\tEnviando:");
+    printf("Enviando:");
     print_message(m);
     // Actually send the message.
     while(length > 0) {
