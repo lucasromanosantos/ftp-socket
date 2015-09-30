@@ -10,7 +10,7 @@ void operate_client(int socket) {
         puts("Sending...");
         Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
         Message *m;
-        m = create_msg(attrs.len + 5);
+        m = malloc_msg(attrs.len + 5);
         m = prepare_msg(attrs, buffer);
         send_msg(socket, m);
         // Message sent. Waiting for response.
@@ -42,15 +42,18 @@ int req_ls(int socket) {
     Message *m;
     Attr attrs;
     int i;
-    m = create_msg(0); // Data is empty
+    m = malloc_msg(0); // Data is empty
     attrs = prepare_attr(0,0,TYPE_LS);
     m = prepare_msg(attrs, "");
     send_msg(socket, m);
     puts("Waiting for ls response..."); // Wait for an ACK
     i = wait_response(socket);
+
+    int seq; // message sequence
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
         //puts("Got an ack.");
+        puts("Got an ack!! Now receiving data\n");
         return 1;
     } else if(i == 0) { // Got an NACK
         //puts("Got an nack.");
@@ -69,7 +72,7 @@ Message* wait_data(int socket) {
     Message *m;
     if((buffer = malloc(1024)) == NULL)
         return 0;
-    m = create_msg(63);
+    m = malloc_msg(63);
     endwait = time(NULL) + seconds;
 
     while(time(NULL) < endwait && i != 1)
@@ -88,8 +91,9 @@ int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
     int size = 0;
-    c = malloc(sizeof(char) * size);
-    m = create_msg(63); // Maximum length
+    //c = malloc(sizeof(char) * size); // have to start with min length
+    c = malloc(MAX_LEN);
+    m = malloc_msg(63); // Maximum length
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
@@ -115,7 +119,7 @@ void send_file(int socket) {
     Attr attrs = prepare_attr(strlen(buffer),0,TYPE_FILESIZE);
     /*if(attrs.len == 0)
         attrs.len = 1;*/
-    m = create_msg(attrs.len + 5);
+    m = malloc_msg(attrs.len + 5);
     m = prepare_msg(attrs, buffer);
     send_msg(socket,m);
 }
