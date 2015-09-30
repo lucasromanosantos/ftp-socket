@@ -1,7 +1,7 @@
-void send_file(int socket);
+void send_filesize(int socket);
 
 void operate_client(int socket) {
-    unsigned char *buffer,c;
+    unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
         error("Unable to allocate memory.");
     while(1) {
@@ -29,10 +29,10 @@ void operate_client(int socket) {
                 //req_cd(socket);
             } else if(i == 3) {
                 flush_buf();
-                send_file(socket);
+                send_filesize(socket);
             } else if(i == 4) {
                 //get_file(socket);
-            } else
+            } else {
                 puts("Invalid option. Please, type another number.");
                 i = load_interface();
             }
@@ -120,8 +120,8 @@ void send_filesize(int socket) {
         puts("Sending...");
         Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
         Message *m;
-        m = create_msg(attrs.len + 5);
-        *m = prepare_msg(attrs, buffer);
+        m = malloc_msg(attrs.len + 5);
+        m = prepare_msg(attrs, buffer);
         send_msg(socket, m);
         // Message sent. Waiting for response.
         puts("Waiting for response...");

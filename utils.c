@@ -7,11 +7,6 @@ void flush_buf() {
     return ;
 }
 
-int print_message(Message *m) {
-    printf("\tMsg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
-    return 1;
-}
-
 int get_files(char *path, char *c) {
 	DIR *dp;
 	struct dirent *ep;
