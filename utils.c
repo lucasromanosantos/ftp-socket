@@ -1,5 +1,13 @@
 #include <math.h>
 
+int get_file_size(FILE *fp) {
+    int sz = 0;
+    //fp = fopen("./abla","r");
+    fseek(fp, 0L, SEEK_END);
+    sz = ftell(fp);
+    return sz;
+}
+
 void flush_buf() {
     // Removes a remaining \n from stdin (in case we do a scanf("%d"))
     char c;

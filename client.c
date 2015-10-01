@@ -92,6 +92,7 @@ int listen_ls(int socket) {
         m = wait_data(socket);
         free(c);
     }
+    printf("saiu do while\n");
     puts(c);
     free(m);
 }
