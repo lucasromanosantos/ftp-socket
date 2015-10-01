@@ -1,7 +1,7 @@
 #include <math.h>
 
 void flush_buf() {
-    // Removes a remaining \n (in case we do a scanf("%d"))
+    // Removes a remaining \n from stdin (in case we do a scanf("%d"))
     char c;
     while((c = getchar()) != '\n');
     return ;
@@ -54,7 +54,7 @@ void error(const char *msg) {
 }
 
 size_t strlen2(const char *p) {
-    size_t result = 2; // two first bytes of nack are 0000 0000
+    size_t result = 2; // Two first bytes of nack are 0000 0000
     while(p[result] != '\0') ++result;
     return result;
 }
@@ -76,6 +76,97 @@ int load_interface() {
     printf("\t4- Get file.\n");
     scanf("%d", &i);
     return i;
+}
+
+char* ls_la(char* param) {
+    // Receives a path as param and returns a char* with all the ls -la data.
+    // Ps: It has a \n separator for every file.
+    char *fileName,aux[64],timebuf[64],this[1024],*res;
+    int totalLength = 1;
+    DIR *dir;
+    struct dirent *file;
+    struct stat fileStat;
+    struct tm lt;
+    struct passwd *pwd;
+    struct group *grp;
+
+    fileName = malloc(sizeof(char) * 1024);
+    res = malloc(sizeof(char));
+
+    if((dir = opendir(param)) == NULL) {
+        printf("Error opening directory: %s\n",strerror(errno));
+        return strerror(errno);
+    }
+
+    if((param[strlen(param) -1]) != '/') { // To correct directory name
+        strcat(param,"/");
+    }
+
+    while((file = readdir(dir)) != NULL)
+    {
+        strcpy(fileName,param);
+        strcat(fileName,file->d_name);
+        if(stat(fileName, &fileStat) != 0)
+            printf("Erro na syscall stat!\n");
+        this[0] = '\0';
+        // Permissions
+        strcat(this,(S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+        strcat(this,(fileStat.st_mode & S_IRUSR) ? "r" : "-");
+        strcat(this,(fileStat.st_mode & S_IWUSR) ? "w" : "-");
+        strcat(this,(fileStat.st_mode & S_IXUSR) ? "x" : "-");
+        strcat(this,(fileStat.st_mode & S_IRGRP) ? "r" : "-");
+        strcat(this,(fileStat.st_mode & S_IWGRP) ? "w" : "-");
+        strcat(this,(fileStat.st_mode & S_IXGRP) ? "x" : "-");
+        strcat(this,(fileStat.st_mode & S_IROTH) ? "r" : "-");
+        strcat(this,(fileStat.st_mode & S_IWOTH) ? "w" : "-");
+        strcat(this,(fileStat.st_mode & S_IXOTH) ? "x | " : "- | ");
+
+        // Number of Hardlinks
+        sprintf(aux, "%d", fileStat.st_nlink);
+        strcat(this,aux);
+        strcat(this," | ");
+
+        // File Owner
+        pwd = getpwuid(fileStat.st_uid);
+        if(pwd != 0) {
+            strcat(this,pwd->pw_name);
+            strcat(this," | ");
+        }
+
+        // File Group
+        grp = getgrgid(fileStat.st_gid);
+        if(grp != 0) {
+            strcat(this,grp->gr_name);
+            strcat(this," | ");
+        }
+
+        // File Size
+        sprintf(aux, "%d",(int)fileStat.st_size);
+        strcat(this,aux);
+        strcat(this," | ");
+
+        // Modified Date
+        time_t t = fileStat.st_mtime;
+        localtime_r(&t, &lt);
+        strftime(timebuf, sizeof(timebuf), "%c", &lt);
+        strcpy(aux,timebuf+4);
+        strcat(this,aux);
+        strcat(this," | ");
+
+        // File Name
+        strcat(this,file->d_name);
+        strcat(this,"\n");
+
+        // Concatenate into response
+        totalLength += strlen(this);
+        if((res = realloc(res,totalLength)) == NULL) {
+            printf("Unable to allocate memory.");
+            exit(-1);
+        }
+        strcat(res,this);
+    }
+    closedir(dir);
+    return res;
 }
 
 /* Expected Parity:

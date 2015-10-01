@@ -75,9 +75,8 @@ int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
     int size = MAX_DATA_LEN + 1;
-    //c = malloc(sizeof(char) * size); // have to start with min length
     c = malloc(size);
-    m = malloc_msg(MAX_DATA_LEN); // Maximum length
+    m = malloc_msg(MAX_DATA_LEN);
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
@@ -87,7 +86,6 @@ int listen_ls(int socket) {
             size += (int) m->attr.len;
             printf("size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
-            //c[strlen(c)] = strcpy(m->data); ??
             strcat(c, m->data);
             send_ack(socket);
         }

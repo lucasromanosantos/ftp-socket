@@ -5,7 +5,11 @@
 #include <math.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
+#include <pwd.h> // To get username
+#include <grp.h> // To get group name
+#include <errno.h> // To use errno
 
 #include <sys/types.h>
 #include <sys/socket.h>
