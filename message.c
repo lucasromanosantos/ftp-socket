@@ -66,6 +66,7 @@ void send_ack(int socket) {
     Attr attr = prepare_attr(0,0,TYPE_ACK);
     m = prepare_msg(attr,"0");
     send_msg(socket, m);
+    free(m);
     return ;
 }
 
@@ -75,37 +76,48 @@ void send_nack(int socket) {
     Attr attr = prepare_attr(0,0,TYPE_NACK);
     m = prepare_msg(attr,"");
     send_msg(socket, m);
+    free(m);
     return ;
 }
 
 int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
 	unsigned char *buffer;
-	if((buffer = malloc(1024)) == NULL)
-		return 0;
-	time_t seconds = 3;
-	time_t endwait;
-	endwait = time(NULL) + seconds;
+	time_t seconds = 3,endwait;
 	int i;
 	Message *m; // check
+
+    endwait = time(NULL) + seconds;
+    if((buffer = malloc(1024)) == NULL)
+        return 0;
     m = malloc_msg(0);
+
 	while(time(NULL) < endwait && i != 1)
 		i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+
 	if(i == 1) {
 		if(m->attr.type == TYPE_ACK) { // got ack
-			puts("Got an ack! \n"); 
+			puts("Got an ack! \n");
+            free(buffer);
+            free(m);
 			return 1;
 		}
 		else if(m->attr.type == TYPE_NACK) {
 			puts("Got a nack! \n");
+            free(buffer);
+            free(m);
 			return 0;
 		}
 		else {
 			puts("Panic!!\n");
+            free(buffer);
+            free(m);
 			return -1;
 		}
 	}
 	else {
 		puts("Error! Timeout? \n");
+        free(buffer);
+        free(m);
 		return 0;
 	}
 }
@@ -125,6 +137,7 @@ int send_msg(int socket, Message *m) {
         s += n;
         length -= n;
     }
+    free(s);
     return (n <= 0) ? - 1 : 0;
 }
 

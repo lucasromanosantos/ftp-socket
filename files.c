@@ -61,8 +61,6 @@ int send_filesize(int socket,FILE* fp,int *seq) {
 	Attr a;
 	m = malloc_msg(sizeof(unsigned int));
 	a = prepare_attr(sizeof(unsigned int),*seq,TYPE_FILESIZE);
-	//m = prepare_msg(a,length);
-	// THIS MAY BE WRONG! Check it later please.
 	unsigned char s[5];
 	memcpy(s,&length,sizeof(unsigned int));
 	m = prepare_msg(a,s);
@@ -71,6 +69,7 @@ int send_filesize(int socket,FILE* fp,int *seq) {
 		send_msg(socket,m);
 	}
 	(*seq)++;
+	free(m);
 	return length;
 }
 
@@ -89,5 +88,6 @@ FILE* get_file() {
 	    buffer = fgets(buffer, BUF_SIZE, stdin);
 	    buffer[strlen(buffer)-1] = '\0';
     }
+    free(buffer);
     return fp;
 }

@@ -77,7 +77,6 @@ Message* wait_data(int socket) {
         free(buffer);
         return m;
     }
-    free(m);
 }
 
 int listen_ls(int socket) {
@@ -99,9 +98,10 @@ int listen_ls(int socket) {
             send_ack(socket);
         }
         m = wait_data(socket);
-        free(c);
     }
-    printf("saiu do while\n");
+    printf("Left while\n");
     puts(c);
+    free(c);
     free(m);
+    return 1;
 }
