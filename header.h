@@ -10,6 +10,7 @@
 #include <pwd.h> // To get username
 #include <grp.h> // To get group name
 #include <errno.h> // To use errno
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>

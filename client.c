@@ -58,14 +58,17 @@ Message* wait_data(int socket) {
     m = malloc_msg(63);
     endwait = time(NULL) + seconds;
 
-    while(time(NULL) < endwait && i != 1)
+    while(time(NULL) < endwait && i != 1) {
         i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+    }
     if(i == 1) {
+        free(buffer);
         return m;
     }
     else {
         puts("Error! Timeout? \n");
         m->attr = prepare_attr(0,0,TYPE_ERROR);
+        free(buffer);
         return m;
     }
     free(m);

@@ -130,7 +130,7 @@ char* ls_la(char* param) {
         strcat(this,(fileStat.st_mode & S_IXOTH) ? "x | " : "- | ");
 
         // Number of Hardlinks
-        sprintf(aux, "%d", fileStat.st_nlink);
+        sprintf(aux, "%d", (int)fileStat.st_nlink);
         strcat(this,aux);
         strcat(this," | ");
 
