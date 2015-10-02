@@ -1,10 +1,13 @@
-void send_filesize(int socket);
+#include "files.c"
 
 void operate_client(int socket) {
+    FILE *fp;
+    int i,length,*seq;
     while(1) {
-        int i = 0;
+        i = 0;
         while(i <= 0 || i >= 5) {
             i = load_interface();
+            *seq = 0;
             if(i == 1) {
                 flush_buf();
                 while(req_ls(socket) == 0);
@@ -13,7 +16,10 @@ void operate_client(int socket) {
                 //req_cd(socket);
             } else if(i == 3) {
                 flush_buf();
-                send_filesize(socket);
+                fp = get_file();
+                length = send_filesize(socket,fp,seq);
+                if(send_file(socket,fp,length,seq) != 1)
+                    puts("Could not send file.");
             } else if(i == 4) {
                 //get_file(socket);
             } else {
@@ -98,23 +104,4 @@ int listen_ls(int socket) {
     printf("saiu do while\n");
     puts(c);
     free(m);
-}
-
-void send_filesize(int socket) {
-    unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("Unable to allocate memory.");
-    while(1) {
-        buffer = fgets(buffer, BUF_SIZE, stdin);
-        buffer[strlen(buffer)-1] = '\0'; // Removing the \n
-        puts("Sending...");
-        Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
-        Message *m;
-        m = malloc_msg(attrs.len + 5);
-        m = prepare_msg(attrs, buffer);
-        send_msg(socket, m);
-        // Message sent. Waiting for response.
-        puts("Waiting for response...");
-        wait_response(socket);
-    }
 }

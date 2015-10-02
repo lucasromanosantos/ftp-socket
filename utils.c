@@ -1,6 +1,5 @@
 #include <math.h>
 
-int get_file_size(FILE *fp);
 void flush_buf();
 int get_files(char *path, char *c);
 int pot(int base, int exp);
@@ -12,14 +11,6 @@ int load_interface();
 int count_slash(unsigned char* c, int len);
 unsigned char* return_dir(unsigned char *c, int length);
 char* ls_la(char* param);
-
-int get_file_size(FILE *fp) {
-    int sz = 0;
-    //fp = fopen("./abla","r");
-    fseek(fp, 0L, SEEK_END);
-    sz = ftell(fp);
-    return sz;
-}
 
 void flush_buf() {
     // Removes a remaining \n from stdin (in case we do a scanf("%d"))
