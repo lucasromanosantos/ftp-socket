@@ -5,6 +5,7 @@ void send_string(int socket);
 void operate_client(int socket) {
     FILE *fp;
     int i,length,*seq;
+    seq = malloc(sizeof(int));
     while(1) {
         i = 0;
         while(i <= 0 || i >= 5) {
@@ -22,13 +23,13 @@ void operate_client(int socket) {
                 fp = get_file();
                 length = send_filesize(socket,fp,seq);
                 if(send_file(socket,fp,length,seq) != 1)
-                    puts("Could not send file.");
+                    puts("(operate_client) Could not send file.");
             } else if(i == 4) {
                 flush_buf();
                 //get_file(socket);
                 send_string(socket);
             } else {
-                puts("Invalid option. Please, type another number.");
+                puts("(operate_client) Invalid option. Please, type another number.");
                 //i = load_interface();
             }
         }
@@ -43,21 +44,21 @@ int req_ls(int socket) {
     attrs = prepare_attr(0,0,TYPE_LS);
     m = prepare_msg(attrs, "");
     send_msg(socket,m);
-    puts("(req_ls)Waiting for ls response..."); // Wait for an ACK
+    puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
     //i = wait_response(socket);
     while(!(i = wait_response(socket)))
         send_msg(socket,m);
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
-        puts("(req_ls)Got an ack.");
+        puts("(req_ls) Got an ack.");
         free(m);
         return 1;
     } else if(i == 0) { // Got an NACK
-        puts("(req_ls)Got a nack.");
+        puts("(req_ls) Got a nack.");
         free(m);
         return 0;
     } else { // Panic!
-        puts("(req_ls)Panic!!");
+        puts("(req_ls) Panic!!");
         free(m);
         exit(1);
     }
@@ -82,7 +83,7 @@ Message* wait_data(int socket) {
         return m;
     }
     else {
-        puts("Error! Timeout? \n");
+        puts("(wait_data) Error! Timeout? \n");
         m->attr = prepare_attr(0,0,TYPE_ERROR);
         free(buffer);
         return m;
@@ -98,21 +99,21 @@ int listen_ls(int socket) {
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
-            puts("(listen_ls)Problem receiving message.");
+            puts("(listen_ls) Problem receiving message.");
             send_nack(socket);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
             size += (int) m->attr.len;
-            printf("(listen_ls)Size of message type showscreen: %d \n", size);
+            printf("(listen_ls) Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
             strcat(c, m->data);
             send_ack(socket);
         }
         else {
-            puts("(listen_ls)Can not handle this message.");
+            puts("(listen_ls) Can not handle this message.");
         }
-        m = wait_data(socket);
+        m = wait_data(socket,m);
     }
-    printf("(listen_ls)Left while\n");
+    printf("(listen_ls) Left while\n");
     puts(c);
     free(c);
     free(m);
@@ -122,7 +123,7 @@ int listen_ls(int socket) {
 void send_string(int socket) {
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("Unable to allocate memory.");
+        error("(send_string) Unable to allocate memory.");
     buffer = fgets(buffer, BUF_SIZE, stdin);
     buffer[strlen(buffer)-1] = '\0'; // Removing the \n
     Message *m;
