@@ -15,7 +15,7 @@ void send_ls(int socket) {
     while(nob > 0) {
         if(nob >= 63) {
             char tmp[64];
-            attrs = prepare_attr(63, seq, TYPE_LS);
+            attrs = prepare_attr(63, seq, TYPE_SHOWSCREEN);
             m = malloc_msg(attrs.len);
             strncpy(tmp, result, 63);
             m = prepare_msg(attrs, tmp);
@@ -25,7 +25,7 @@ void send_ls(int socket) {
         }
         else {
             char tmp[nob + 1];
-            attrs = prepare_attr(nob, seq, TYPE_LS);
+            attrs = prepare_attr(nob, seq, TYPE_SHOWSCREEN);
             m = malloc_msg(attrs.len); // ou nob
             strncpy(tmp, result, nob);
             m = prepare_msg(attrs, tmp);

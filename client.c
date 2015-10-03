@@ -8,7 +8,7 @@ void operate_client(int socket) {
     seq = malloc(sizeof(int));
     while(1) {
         i = 0;
-        while(i <= 0 || i >= 5) {
+        while(i <= 0 || i >= 6) {
             i = load_interface();
             *seq = 0;
             if(i == 1) {
@@ -28,9 +28,15 @@ void operate_client(int socket) {
                 flush_buf();
                 //get_file(socket);
                 send_string(socket);
-            } else {
+            } else if(i == 5) {
+                char *s;
+                s = ls("./", "");
+                printf("imprimindo: ... \n");
+                printf("%s \n", s);
+            }
+            else {
                 puts("(operate_client) Invalid option. Please, type another number.");
-                //i = load_interface();
+                i = load_interface();
             }
         }
     }
@@ -91,14 +97,16 @@ Message* wait_data(int socket,Message* m) {
     }
 }
 
+
 int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
-    int size = MAX_DATA_LEN + 1;
+    int size = 0;
     int i=0;
     c = malloc(size);
     m = malloc_msg(MAX_DATA_LEN);
-    m = wait_data(socket);
+    m = wait_data(socket, m);
+    strcpy(c, ""); // we have to initialize c or the first char will be garbage
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
             puts("(listen_ls) Problem receiving message.");
@@ -115,10 +123,11 @@ int listen_ls(int socket) {
         }
         m = wait_data(socket,m);
     }
-    printf("(listen_ls) Left while\n");
+    printf("\n========= LS ======== (atualmente com ' de separador)\n");
     puts(c);
+    printf("\n");
     free(c);
-    free(m);
+    //free(m);
     return 1;
 }
 
