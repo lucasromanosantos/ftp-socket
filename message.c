@@ -22,6 +22,8 @@ char* msg_to_str(Message *m) {
     unsigned char *c;
     if((c = malloc(msg_length(m))) == NULL)
         error("(msg_to_str)Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
+    else
+        puts("Memory allocated succesfully.");
     c[0] = m->init;
     memcpy(c+1,&m->attr,2);
     memcpy(c+3,m->data,m->attr.len);
@@ -137,7 +139,7 @@ int send_msg(int socket, Message *m) {
         s += n;
         length -= n;
     }
-    free(s);
+    //free(s);
     return (n <= 0) ? - 1 : 0;
 }
 

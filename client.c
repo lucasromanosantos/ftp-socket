@@ -5,6 +5,7 @@ void send_string(int socket);
 void operate_client(int socket) {
     FILE *fp;
     int i,length,*seq;
+    seq = malloc(sizeof(int));
     while(1) {
         i = 0;
         while(i <= 0 || i >= 5) {
@@ -63,15 +64,16 @@ int req_ls(int socket) {
     }
 }
 
-Message* wait_data(int socket) {
+Message* wait_data(int socket,Message* m) {
     unsigned char *buffer;
     time_t seconds = 3;
     time_t endwait;
     int i;
-    Message *m;
+    //Message *m;
     if((buffer = malloc(1024)) == NULL)
         return 0;
-    m = malloc_msg(63);
+    //m = malloc_msg(63);
+    m = realloc(m,68);
     endwait = time(NULL) + seconds;
 
     while(time(NULL) < endwait && i != 1) {
@@ -93,6 +95,7 @@ int listen_ls(int socket) {
     Message *m;
     unsigned char *c;
     int size = MAX_DATA_LEN + 1;
+    int i=0;
     c = malloc(size);
     m = malloc_msg(MAX_DATA_LEN);
     m = wait_data(socket);
@@ -108,9 +111,11 @@ int listen_ls(int socket) {
             send_ack(socket);
         }
         else {
-            puts("(listen_ls)Can not handle this message.");
+            //puts("(listen_ls)Can not handle this message.");
+            //print_message(m);
+            //for(i=0;i<32000;i++);
         }
-        m = wait_data(socket);
+        m = wait_data(socket,m);
     }
     printf("(listen_ls)Left while\n");
     puts(c);
