@@ -11,7 +11,7 @@ void operate_ls(int socket) {
 void operate_alone(int socket) {
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("Unable to allocate memory.");
+        error("(operate_alone) Unable to allocate memory.");
     while(1) {
         buffer = fgets(buffer, BUF_SIZE, stdin);
         buffer[strlen(buffer)-1] = '\0'; // Removing the \n

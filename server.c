@@ -2,12 +2,12 @@ void send_ls(int socket) {
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("(send_ls)Unable to allocate memory");
+        puts("(send_ls) Unable to allocate memory");
         return;
     }
     get_files(".", result);
     size_t nob = strlen(result); // nob = number of bytes
-    printf("(send_ls)Size of total nob: %d \n", (int) nob);
+    printf("(send_ls) Size of total nob: %d \n", (int) nob);
     int seq = 0;
 
     Message *m; // check allocation / realloc???
@@ -44,17 +44,17 @@ void send_ls(int socket) {
             break;
         seq += 1;
     }
-    printf("(send_ls)Final sequence: %d \n", seq);
+    printf("(send_ls) Final sequence: %d \n", seq);
 }
 
 void operate_server(int socket) {
     unsigned char *buffer2;
     if((buffer2 = malloc(MIN_LEN)) == NULL)
-        error("Error allocating memory."); // alocar menos para ack/nack , não? e dps q receber free()
+        error("(operate_server) Error allocating memory."); // alocar menos para ack/nack , não? e dps q receber free()
 
     unsigned char *buffer;
     if((buffer = malloc(MAX_MSG_LEN)) == NULL)
-        error("Error allocating memory.");
+        error("(operate_server) Error allocating memory.");
     Message *m;
     m = malloc_msg(0);
     unsigned char par;
@@ -68,18 +68,18 @@ void operate_server(int socket) {
             if((int) par != (int) m->par) {
                 //printf("\tError in parity! Please resend the message!\n\tSending nack...\n");
                 //send_nack(socket);
-                printf("\t(operate_server)Nack sent.");
+                printf("\t(operate_server) Nack sent.");
             }
             else {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
-                    puts("(operate_server)Ack sent.");
+                    puts("\t(operate_server) Ack sent.");
                     send_ls(socket);
-                    puts("(operate_server)Ls sent.");
+                    puts("\t(operate_server) Ls sent.");
                 }
                 //puts("Sending acknowledge...");
                 send_ack(socket); // Now with "socket" parameter we missed!
-                puts("(operate_server)Ack sent.");
+                puts("\t(operate_server) Ack sent.");
             }
         }
     }

@@ -34,7 +34,7 @@ int get_files(char *path, char *c) {
 		return 1;
 	}
 	else {
-		puts("Error! Could not open the directory");
+		puts("(get_files) Error! Could not open the directory");
 		return 0;
 	}
 }
@@ -143,7 +143,7 @@ char* ls_la(char* param) {
     res = malloc(sizeof(char));
 
     if((dir = opendir(param)) == NULL) {
-        printf("Error opening directory: %s\n",strerror(errno));
+        printf("(ls_la) Error opening directory: %s\n",strerror(errno));
         return strerror(errno);
     }
 
@@ -156,7 +156,7 @@ char* ls_la(char* param) {
         strcpy(fileName,param);
         strcat(fileName,file->d_name);
         if(stat(fileName, &fileStat) != 0)
-            printf("Erro na syscall stat!\n");
+            printf("(ls_la) Erro na syscall stat!\n");
         this[0] = '\0';
         // Permissions
         strcat(this,(S_ISDIR(fileStat.st_mode)) ? "d" : "-");
@@ -209,7 +209,7 @@ char* ls_la(char* param) {
         // Concatenate into response
         totalLength += strlen(this);
         if((res = realloc(res,totalLength)) == NULL) {
-            printf("Unable to allocate memory.");
+            printf("(ls_la) Unable to allocate memory.");
             exit(-1);
         }
         strcat(res,this);

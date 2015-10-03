@@ -19,7 +19,7 @@ int send_file(int socket,FILE *fp,int len,int *seq) {
 
 	m = malloc_msg(MAX_DATA_LEN);
     if((c = malloc(sizeof(char) * 64)) == NULL)
-        error("Unable to allocate memory.");
+        error("(send_file) Unable to allocate memory.");
 
 	while(len > MAX_DATA_LEN) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
 		len -= MAX_DATA_LEN;
@@ -76,7 +76,7 @@ int send_filesize(int socket,FILE* fp,int *seq) {
 FILE* get_file() {
 	unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("Unable to allocate memory.");
+        error("(get_file) Unable to allocate memory.");
     puts("What is the file path?");
     buffer = fgets(buffer, BUF_SIZE, stdin);
     buffer[strlen(buffer)-1] = '\0'; // Removing the \n

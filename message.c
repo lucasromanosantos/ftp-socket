@@ -8,7 +8,7 @@ int print_message(Message *m) {
 Message* malloc_msg(int length) {
     Message *m;
     if((m = malloc(1 + 2 + length + 1 + 1)) == NULL)
-        error("(malloc_msg)Unable to allocate memory.");
+        error("(malloc_msg) Unable to allocate memory.");
     return m;
 }
 
@@ -21,7 +21,7 @@ char* msg_to_str(Message *m) {
     int i,pos;
     unsigned char *c;
     if((c = malloc(msg_length(m))) == NULL)
-        error("(msg_to_str)Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
+        error("(msg_to_str) Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
     else
         puts("Memory allocated succesfully.");
     c[0] = m->init;
@@ -42,7 +42,7 @@ Message* str_to_msg(char* c) {
     //memcpy(&m->attr,c+1 2);
     m->attr = a;
     if((m->data = malloc(m->attr.len)) == NULL)
-        error("(str_to_msg)Unable to allocate memory.");
+        error("(str_to_msg) Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
     m->par = c[strlen2(c)-1];
     return m;
@@ -56,7 +56,7 @@ Message* prepare_msg(Attr attr, unsigned char *data) {
     m->attr.seq = attr.seq;
     m->attr.type = attr.type;
     if((m->data = malloc(sizeof(char) * (attr.len))) == NULL)
-        error("(prepare_msg)Unable to allocate memory.");
+        error("(prepare_msg) Unable to allocate memory.");
     strcpy(m->data, data);
     m->par = get_parity(m);
     return m;
@@ -98,26 +98,26 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
 
 	if(i == 1) {
 		if(m->attr.type == TYPE_ACK) { // got ack
-			puts("(wait_response)Got an ack! \n");
+			puts("(wait_response) Got an ack! \n");
             free(buffer);
             free(m);
 			return 1;
 		}
 		else if(m->attr.type == TYPE_NACK) {
-			puts("(wait_response)Got a nack! \n");
+			puts("(wait_response) Got a nack! \n");
             free(buffer);
             free(m);
 			return 0;
 		}
 		else {
-			puts("(wait_response)Panic!!\n");
+			puts("(wait_response) Panic!!\n");
             free(buffer);
             free(m);
 			return -1;
 		}
 	}
 	else {
-		puts("(wait_response)Error! Timeout? \n");
+		puts("(wait_response) Error! Timeout? \n");
         free(buffer);
         free(m);
 		return 0;
@@ -129,12 +129,12 @@ int send_msg(int socket, Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    printf("\t(send_msg)Enviando: ");
+    printf("\t(send_msg) Enviando: ");
     print_message(m);
     // Actually send the message.
     while(length > 0) {
         n = send(socket, s, length, 0);
-        printf("\t(send_msg)%d bits enviados... \n", (int)n);
+        printf("\t(send_msg) %d bits enviados... \n", (int)n);
         if(n <= 0) break; // Error
         s += n;
         length -= n;
@@ -150,9 +150,9 @@ int receive(int socket, unsigned char *data, Message **m) {
     ufds[0].events = POLLIN; // check for just normal data
     rv = poll(ufds, 1, -1); // -1 = Infinite timeout (for testing)
     if(rv == -1)
-        error("(receive)Erro no poll");
+        error("(receive) Erro no poll");
     else if (rv == 0) {
-        printf("(receive)Timeout! No data received");
+        printf("(receive) Timeout! No data received");
         return 0; // Fail
     }
     else {
@@ -182,9 +182,9 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         rv = poll(ufds,1,-1);
     }
     if(rv == -1)
-        error("(recv_tm)Erro no poll");
+        error("(recv_tm) Erro no poll");
     else if (rv == 0) {
-        puts("\t(recv_tm)Timeout! No data received! Is the server working?");
+        puts("\t(recv_tm) Timeout! No data received! Is the server working?");
         return 0; // Fail
     }
     else {
@@ -197,7 +197,7 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
             }
 
             // Impressão da mensagem recebida:
-            printf("\t(recv_tm)Mensagem recebida: '");
+            printf("\t(recv_tm) Mensagem recebida: '");
             Attr a;
             memcpy(&a,data+1,2);
             int i;
