@@ -68,16 +68,18 @@ void operate_server(int socket) {
             if((int) par != (int) m->par) {
                 //printf("\tError in parity! Please resend the message!\n\tSending nack...\n");
                 //send_nack(socket);
-                printf("\tNack sent.");
+                printf("\t(operate_server)Nack sent.");
             }
             else {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
+                    puts("(operate_server)Ack sent.");
                     send_ls(socket);
+                    puts("(operate_server)Ls sent.");
                 }
                 //puts("Sending acknowledge...");
                 send_ack(socket); // Now with "socket" parameter we missed!
-                puts("Ack sent.");
+                puts("(operate_server)Ack sent.");
             }
         }
     }

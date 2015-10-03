@@ -43,21 +43,21 @@ int req_ls(int socket) {
     attrs = prepare_attr(0,0,TYPE_LS);
     m = prepare_msg(attrs, "");
     send_msg(socket,m);
-    puts("Waiting for ls response..."); // Wait for an ACK
+    puts("(req_ls)Waiting for ls response..."); // Wait for an ACK
     //i = wait_response(socket);
     while(!(i = wait_response(socket)))
         send_msg(socket,m);
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
-        puts("Got an ack.");
+        puts("(req_ls)Got an ack.");
         free(m);
         return 1;
     } else if(i == 0) { // Got an NACK
-        puts("Got a nack.");
+        puts("(req_ls)Got a nack.");
         free(m);
         return 0;
     } else { // Panic!
-        puts("Panic in req_ls!!");
+        puts("(req_ls)Panic!!");
         free(m);
         exit(1);
     }
@@ -98,21 +98,21 @@ int listen_ls(int socket) {
     m = wait_data(socket);
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
-            puts("Problem receiving message.");
+            puts("(listen_ls)Problem receiving message.");
             send_nack(socket);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
             size += (int) m->attr.len;
-            printf("Size of message type showscreen: %d \n", size);
+            printf("(listen_ls)Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
             strcat(c, m->data);
             send_ack(socket);
         }
         else {
-            puts("Can not handle this message in listen_ls");
+            puts("(listen_ls)Can not handle this message.");
         }
         m = wait_data(socket);
     }
-    printf("Left while\n");
+    printf("(listen_ls)Left while\n");
     puts(c);
     free(c);
     free(m);
