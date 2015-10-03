@@ -10,6 +10,7 @@ Attr prepare_attr(int length,int seq,int type);
 int load_interface();
 int count_slash(unsigned char* c, int len);
 unsigned char* return_dir(unsigned char *c, int length);
+//void send_string(int socket);
 char* ls_la(char* param);
 
 void flush_buf() {

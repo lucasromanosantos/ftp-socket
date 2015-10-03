@@ -2,12 +2,12 @@ void send_ls(int socket) {
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("unable to allocate memory");
+        puts("(send_ls)Unable to allocate memory");
         return;
     }
     get_files(".", result);
     size_t nob = strlen(result); // nob = number of bytes
-    printf("size of total nob: %d \n", (int) nob);
+    printf("(send_ls)Size of total nob: %d \n", (int) nob);
     int seq = 0;
 
     Message *m; // check allocation / realloc???
@@ -44,7 +44,7 @@ void send_ls(int socket) {
             break;
         seq += 1;
     }
-    printf("final sequence: %d \n", seq);
+    printf("(send_ls)Final sequence: %d \n", seq);
 }
 
 void operate_server(int socket) {
