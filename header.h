@@ -46,6 +46,9 @@
 #define TYPE_ERROR 14
 #define TYPE_END 15
 
+#define FILE_LEN 256
+#define NUM_FILE 32
+
 typedef struct Attr {
 	unsigned short len : 6,
      	  		   seq : 6,
