@@ -14,15 +14,17 @@ unsigned int get_file_size(FILE *fp) {
 }
 
 unsigned char* read_file(FILE *fp,unsigned int size) {
+	// Size is the size of the file (return value from get_file_size(fp)).
 	int i,x;
 	unsigned char* c = malloc(sizeof(unsigned char) * (size + 1));
 	for(i=0; i<size;) {
-		i += fread(c+i,1,1,fp);
+		i += fread(c+i,sizeof(unsigned char),size - i,fp);
 	}
 	return c;
 }
 
 void write_file(FILE *fp,unsigned char *c,int size) {
+	// Size is the size of the file (return value from get_file_size(fp)).
 	int i;
 	for(i=0; i<size; i++)
 		i += fwrite(c,sizeof(unsigned char),size-i,fp);
@@ -44,7 +46,6 @@ int main() {
 	}
 	write_file(fp,c,size);
 	fclose(fp);
-	puts("Success?");
 	return 0;
 }
 */
