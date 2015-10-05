@@ -30,7 +30,7 @@ void operate_client(int socket) {
                 send_string(socket);
             } else if(i == 5) {
                 char *s;
-                s = ls("./", "");
+                s = ls("./", " ");
                 printf("imprimindo: ... \n");
                 printf("%s \n", s);
             }

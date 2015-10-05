@@ -169,15 +169,3 @@ unsigned char* fix_dir(unsigned char *c, int length) {
     return c;
 }
 
-int main() {
-    unsigned char *addr = malloc(sizeof(char) * 1024);
-    int i,n;
-    scanf("%d\n",&n);
-    for(i=0; i<n; i++) {
-        scanf("%s",addr);
-        addr = fix_dir(addr,strlen(addr));
-        printf("Addr: ");
-        puts(addr);
-    }
-}
-
