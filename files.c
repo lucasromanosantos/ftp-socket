@@ -2,15 +2,53 @@ unsigned int get_file_size(FILE *fp);
 int send_file(int socket,FILE *fp,int len,int *seq);
 int send_filesize(int socket,FILE *fp,int *seq);
 FILE* get_file();
+unsigned char* read_file(FILE *fp,unsigned int size);
+void write_file(FILE *fp,unsigned char *c,int size);
 
 unsigned int get_file_size(FILE *fp) {
     int sz = 0;
-    //fp = fopen("./abla","r");
     fseek(fp, 0L, SEEK_END);
     sz = ftell(fp);
+    rewind(fp);
     return sz;
 }
 
+unsigned char* read_file(FILE *fp,unsigned int size) {
+	// Size is the size of the file (return value from get_file_size(fp)).
+	int i,x;
+	unsigned char* c = malloc(sizeof(unsigned char) * (size + 1));
+	for(i=0; i<size;) {
+		i += fread(c+i,sizeof(unsigned char),size - i,fp);
+	}
+	return c;
+}
+
+void write_file(FILE *fp,unsigned char *c,int size) {
+	// Size is the size of the file (return value from get_file_size(fp)).
+	int i;
+	for(i=0; i<size; i++)
+		i += fwrite(c,sizeof(unsigned char),size-i,fp);
+	return ;
+}
+/*
+int main() {
+	FILE* fp;
+	if(!(fp = fopen("./main2.c","r"))) {
+		printf("Couldnt open file.\n");
+		exit(1);
+	}
+	unsigned int size = get_file_size(fp);
+	unsigned char* c = read_file(fp,size);
+	fclose(fp);
+	if(!(fp = fopen("copy.c","w"))) {
+		printf("Couldnt open file.\n");
+		exit(1);
+	}
+	write_file(fp,c,size);
+	fclose(fp);
+	return 0;
+}
+*/
 int send_file(int socket,FILE *fp,int len,int *seq) {
 	int nob = 0,i;
 	unsigned char *c;
@@ -168,4 +206,16 @@ unsigned char* fix_dir(unsigned char *c, int length) {
     c = to_vector(tmp,n);
     return c;
 }
-
+/*
+int main() {
+    unsigned char *addr = malloc(sizeof(char) * 1024);
+    int i,n;
+    scanf("%d\n",&n);
+    for(i=0; i<n; i++) {
+        scanf("%s",addr);
+        addr = fix_dir(addr,strlen(addr));
+        printf("Addr: ");
+        puts(addr);
+    }
+}
+*/
