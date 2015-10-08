@@ -1,4 +1,4 @@
-#include "files.c"
+
 
 void send_string(int socket);
 
@@ -20,13 +20,13 @@ void operate_client(int socket) {
                 //req_cd(socket);
             } else if(i == 3) {
                 flush_buf();
-                fp = get_file();
+                fp = open_file();
                 length = send_filesize(socket,fp,seq);
                 if(send_file(socket,fp,length,seq) != 1)
                     puts("(operate_client) Could not send file.");
             } else if(i == 4) {
                 flush_buf();
-                //get_file(socket);
+                //open_file(socket);
                 send_string(socket);
             } else if(i == 5) {
                 char *s;

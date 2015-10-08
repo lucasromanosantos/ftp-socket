@@ -1,3 +1,5 @@
+#include "files.c"
+
 void send_ls(int socket) {
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
@@ -48,24 +50,29 @@ void send_ls(int socket) {
 }
 
 void operate_server(int socket) {
-    unsigned char *buffer2;
+    unsigned char *buffer,*buffer2,*addr,par;
+    int res = 0;
+    Message *m;
+
     if((buffer2 = malloc(MIN_LEN)) == NULL)
         error("(operate_server) Error allocating memory."); // alocar menos para ack/nack , não? e dps q receber free()
-
-    unsigned char *buffer;
     if((buffer = malloc(MAX_MSG_LEN)) == NULL)
         error("(operate_server) Error allocating memory.");
-    Message *m;
+    if((addr = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(operate_server) Error allocating memory.");
     m = malloc_msg(0);
-    unsigned char par;
-    int res = 0;
+
+    addr[0] = '.';
+    addr[1] = '/';
+    addr[2] = '\0';
+
     while(1) {
         res = recv_tm(socket, buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
             par = get_parity(m);
             //printf("Paridade calculada: %d \n", (int) par);
             //printf("Paridade mensagem: %d \n", (int) m->par);
-            if((int) par != (int) m->par) {
+            if((int)par != (int)m->par) {
                 //printf("\tError in parity! Please resend the message!\n\tSending nack...\n");
                 //send_nack(socket);
                 printf("\t(operate_server) Nack sent.");
@@ -73,9 +80,26 @@ void operate_server(int socket) {
             else {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
-                    puts("\t(operate_server) Ack sent.");
+                    puts("\t(operate_server) Ready to receive a Ls. Ack sent.");
                     send_ls(socket);
                     puts("\t(operate_server) Ls sent.");
+                } else if (m->attr.type == TYPE_CD) { // client request LS
+                    send_ack(socket);
+                    puts("\t(operate_server) Ready to receive a Cd. Ack sent.");
+                } else if (m->attr.type == TYPE_PUT) { // client request LS
+                    send_ack(socket);
+                    puts("\t(operate_server) Ready to receive a Put. Ack sent.");
+                    strcat(addr,m->data); // Concatenating file name.
+                    FILE *fp;
+                    if((fp = fopen(addr,"w")) == NULL) {
+                        puts("Could not create a new file.");
+                        exit(1);
+                    }
+                    receive_file(socket,fp);
+                    puts("I should have received a file. Please, check it.");
+                } else if (m->attr.type == TYPE_GET) { // client request LS
+                    send_ack(socket);
+                    puts("\t(operate_server) Ready to receive a Get. Ack sent.");
                 }
                 //puts("Sending acknowledge...");
                 send_ack(socket); // Now with "socket" parameter we missed!

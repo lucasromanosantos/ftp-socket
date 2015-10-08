@@ -1,9 +1,10 @@
 unsigned int get_file_size(FILE *fp);
 int send_file(int socket,FILE *fp,int len,int *seq);
 int send_filesize(int socket,FILE *fp,int *seq);
-FILE* get_file();
+FILE* open_file();
 unsigned char* read_file(FILE *fp,unsigned int size);
 void write_file(FILE *fp,unsigned char *c,int size);
+void receive_file(int socket,FILE *fp);
 
 unsigned int get_file_size(FILE *fp) {
     int sz = 0;
@@ -111,10 +112,10 @@ int send_filesize(int socket,FILE* fp,int *seq) {
 	return length;
 }
 
-FILE* get_file() {
+FILE* open_file() {
 	unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("(get_file) Unable to allocate memory.");
+        error("(open_file) Unable to allocate memory.");
     puts("What is the file path?");
     buffer = fgets(buffer, BUF_SIZE, stdin);
     buffer[strlen(buffer)-1] = '\0'; // Removing the \n
@@ -128,6 +129,48 @@ FILE* get_file() {
     }
     free(buffer);
     return fp;
+}
+
+void receive_file(int socket,FILE *fp) {
+	int res = 0;
+	Message *m;
+	unsigned char *buf,par;
+
+	buf = malloc(sizeof(unsigned char) * MAX_DATA_LEN);
+	m = malloc_msg(MAX_DATA_LEN);
+
+    res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+	par = get_parity(m);
+	if(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
+		// This should be a while, sending nack and waiting for the right message.
+		puts("(receive_file) Parity error or message wasnt the file size.");
+		return ;
+	}
+	int size,i=0,j;
+	memcpy(&size,m->data,4);
+	while(i < size) {
+	    res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+		par = get_parity(m);
+		if((int)par != (int)m->par) {
+			puts("(receive_file) Parity error or message.");
+			send_nack(socket);
+		} else {
+			for(j=0; j<m->attr.len;) // Write data received in file.
+				j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
+			i += m->attr.len;
+			send_ack(socket);
+		}
+	}
+	// Read all messages, created and updated the file, I should receive a TYPE_END.
+	res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+	par = get_parity(m);
+	if(((int)par != (int)m->par) || (m->attr.type != TYPE_END)) {
+		// This should be a while, sending nack and waiting for the right message.
+		puts("(receive_file) Parity error or message wasnt an end.");
+		return ;
+	}
+	fclose(fp);
+	return ;
 }
 
 //------------

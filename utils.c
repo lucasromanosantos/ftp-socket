@@ -93,14 +93,14 @@ char* ls(char* path, char* args) { // generic ls
         struct tm lt;
         struct passwd *pwd;
         struct group *grp;
-        
+
         fileName = malloc(sizeof(char) * 1024); // max size of filename
 
         int total_length = 1;
 
         while((file = readdir(dir)) != NULL) {
-            if ((args == "l" && (file->d_name[0] != '.' && file->d_name[strlen(file->d_name) - 1] != '~')) 
-                    || args == "la" || args == "al") { // Eliminating hidden files and files ending in "~") 
+            if ((args == "l" && (file->d_name[0] != '.' && file->d_name[strlen(file->d_name) - 1] != '~'))
+                    || args == "la" || args == "al") { // Eliminating hidden files and files ending in "~")
                 strcpy(fileName, path);
                 strcat(fileName,file->d_name);
                 printf("(ls) filename = %s \n", fileName);
