@@ -10,7 +10,7 @@ void send_ls_data(int socket) {
     get_files(".", result);
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
-    int seq = 0;
+    int seq = 1;
 
     Message *m; // check allocation / realloc???
     m = malloc_msg(MAX_DATA_LEN);
