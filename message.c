@@ -22,8 +22,8 @@ char* msg_to_str(Message *m) {
     unsigned char *c;
     if((c = malloc(msg_length(m))) == NULL)
         error("(msg_to_str) Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
-    else
-        puts("Memory allocated succesfully.");
+    //else
+    //    puts("Memory allocated succesfully.");
     c[0] = m->init;
     memcpy(c+1,&m->attr,2);
     memcpy(c+3,m->data,m->attr.len);
@@ -135,7 +135,10 @@ int send_msg(int socket, Message *m) {
     while(length > 0) {
         n = send(socket, s, length, 0);
         printf("\t(send_msg) %d bits enviados... \n", (int)n);
-        if(n <= 0) break; // Error
+        //if(n <= 0) break; // Error
+        if(n < 0) {
+            printf("\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
+        }
         s += n;
         length -= n;
     }
@@ -192,18 +195,21 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(socket, data, MAX_LEN, 0);
+            //puts(data);
+            //printf("(recv_tm) Init is: %d\n",(int)(data[0]));
             if(data[0] != 126) {// 126 = 0111 1110
 		      return 0; // Fail
             }
 
             // Impressão da mensagem recebida:
-            printf("\t(recv_tm) Mensagem recebida: '");
+            //printf("\t(recv_tm) Mensagem recebida: '");
             Attr a;
             memcpy(&a,data+1,2);
             int i;
+            /*printf("\n(recv_tm) After init: %d%d - A.len = %d\n",(int)data[1],(int)data[2],a.len);
             for(i=0; i<a.len; i++)
                 printf("%c",data[i+3]);
-            printf("'\n");
+            printf("'\n");*/
 
             *m = str_to_msg(data);
             return 1; // Success

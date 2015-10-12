@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
     int socket;
-    //socket = ConexaoRawSocket(DEVICE);
+    socket = ConexaoRawSocket(DEVICE);
     if(socket < 0)
         error("Error opening socket.");
     printf("-- Running on %s mode...\n", argv[1]);

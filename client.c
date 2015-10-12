@@ -10,20 +10,19 @@ void operate_client(int socket) {
             i = load_interface();
             *seq = 0;
             if(i == 1) {
-                flush_buf();
+                puts("(operate_client) Sending ls request.");
                 while(req_ls(socket) == 0);
+                    //printf("(operate_client) Not able to send a LS request.");
+                puts("(operate_client) Listening to ls...");
                 listen_ls(socket);
             } else if(i == 2) {
-                flush_buf();
                 //req_cd(socket);
             } else if(i == 3) {
-                flush_buf();
                 fp = open_file();
                 length = send_filesize(socket,fp,seq);
                 if(send_file(socket,fp,length,seq) != 1)
                     puts("(operate_client) Could not send file.");
             } else if(i == 4) {
-                flush_buf();
                 //open_file(socket);
                 send_string(socket);
             } else if(i == 5) {
@@ -49,7 +48,6 @@ int req_ls(int socket) {
     m = prepare_msg(attrs, "");
     send_msg(socket,m);
     puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
-    //i = wait_response(socket);
     while(!(i = wait_response(socket)))
         send_msg(socket,m);
     if(i == 1) { // Got an ACK
@@ -73,19 +71,21 @@ Message* wait_data(int socket,Message* m) {
     time_t seconds = 3;
     time_t endwait;
     int i;
-    //Message *m;
+    Message *m2;
     if((buffer = malloc(1024)) == NULL)
         return 0;
-    //m = malloc_msg(63);
-    m = realloc(m,68);
+    buffer[0] = '\0';
+    m2 = malloc_msg(63);
+    //m = realloc(m,68);
     endwait = time(NULL) + seconds;
 
-    while(time(NULL) < endwait && i != 1) {
-        i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+    while(time(NULL) < endwait && i != 1 && buffer[0] != 126) {
+    //while(time(NULL) < endwait && i != 1) {
+        i = recv_tm(socket, buffer, &m2, STD_TIMEOUT);
     }
     if(i == 1) {
         free(buffer);
-        return m;
+        return m2;
     }
     else {
         puts("(wait_data) Error! Timeout? \n");
@@ -102,9 +102,10 @@ int listen_ls(int socket) {
     int size = 0;
     int i=0;
     //c = malloc(size); This might be the problem. We changed size to 0. Dont know why, but..
-    c = malloc(MAX_DATA_LEN * sizeof(unsigned char));
+    c = malloc(MAX_DATA_LEN * sizeof(unsigned char) + 1);
     m = malloc_msg(MAX_DATA_LEN);
     m = wait_data(socket, m);
+    print_message(m);
     //strcpy(c, ""); // we have to initialize c or the first char will be garbage
     c[0] = '\0'; // Better way to initialize an empty string.
     while (m->attr.type != TYPE_END) {
@@ -119,12 +120,20 @@ int listen_ls(int socket) {
             send_ack(socket);
         }
         else {
-            puts("(listen_ls) Can not handle this message.");
+            //puts("(listen_ls) Can not handle this message.");
         }
         m = wait_data(socket,m);
     }
     printf("\n========= LS ======== (atualmente com ' de separador)\n");
-    puts(c);
+    //puts(c);
+    //printf("\n");
+    for(i=0; i<size; i++) {
+        if(c[i] == '\'') {
+            printf("   ");
+        }
+        else
+            printf("%c",c[i]);
+    }
     printf("\n");
     free(c);
     //free(m);
