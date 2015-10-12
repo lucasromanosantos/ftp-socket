@@ -2,30 +2,37 @@ void send_string(int socket);
 
 void operate_client(int socket) {
     FILE *fp;
-    int i,length,*seq;
+    int i,length,*seq,*comm;
+    unsigned char *args;
     seq = malloc(sizeof(int));
+    comm = malloc(sizeof(int));
+    args = malloc(sizeof(unsigned char) * 64);
     while(1) {
-        i = 0;
-        while(i <= 0 || i >= 6) {
-            i = load_interface();
+        *comm = 0;
+        while(*comm <= 0 || *comm >= 6) {
+            //i = load_interface();
+            args = show_interface(comm);
             *seq = 0;
-            if(i == 1) {
+            if(*comm == 1) {
                 puts("(operate_client) Sending ls request.");
                 while(req_ls(socket) == 0);
                     //printf("(operate_client) Not able to send a LS request.");
                 puts("(operate_client) Listening to ls...");
                 listen_ls(socket);
-            } else if(i == 2) {
+            } else if(*comm == 2) {
+                puts("(operate_client) Sending cd request.");
                 //req_cd(socket);
-            } else if(i == 3) {
+            } else if(*comm == 3) {
+                puts("(operate_client) Sending put request.");
                 fp = open_file();
                 length = send_filesize(socket,fp,seq);
                 if(send_file(socket,fp,length,seq) != 1)
                     puts("(operate_client) Could not send file.");
-            } else if(i == 4) {
+            } else if(*comm == 4) {
+                puts("(operate_client) Sending get request.");
                 //open_file(socket);
                 send_string(socket);
-            } else if(i == 5) {
+            } else if(*comm == 5) {
                 char *s;
                 s = ls("./", " ");
                 printf("imprimindo: ... \n");
@@ -33,7 +40,7 @@ void operate_client(int socket) {
             }
             else {
                 puts("(operate_client) Invalid option. Please, type another number.");
-                i = load_interface();
+                args = show_interface(comm);
             }
         }
     }

@@ -324,6 +324,88 @@ int load_interface() {
     return i;
 }
 
+
+unsigned char* show_interface(int *comm) {
+    // Watch out! *comm has to come already allocated.
+    char buffer[1024]; // Total buffer and argument
+    char com[6], *arg; // Command and arguments
+    int i = 0;
+
+    if(CLIENT)
+        printf("%s@client: ",USER);
+    else
+        printf("%s@server: ",USER);
+
+    fgets(buffer,1024,stdin);
+    buffer[strlen(buffer) - 1] = '\0';
+
+    arg = malloc(sizeof(unsigned char) * 1024);
+    arg[0] = '\0';
+
+    //printf("buffer: %s \n", buffer);
+    while(i < 5 && buffer[i] != ' ' && buffer[i] != '\0') {
+        com[i] = buffer[i];
+        i++;
+    }
+    com[i] = '\0';
+    //printf("printf ls: %s\n", com);
+
+    if(strcmp(com, "ls") == 0) {
+        *comm = 1;
+    } else if(strcmp(com, "cd") == 0) {
+        *comm = 2;
+    } else if(strcmp(com, "put") == 0) {
+        *comm = 3;
+    } else if(strcmp(com, "get") == 0) {
+        *comm = 4;
+    } else if(strcmp(com, "exit") == 0) {
+        exit(0);
+    } else if(strcmp(com, "clear") == 0) {
+        system("clear");
+        *comm = 0;
+        return "";
+    } else if(strcmp(com, "help") == 0) {
+        *comm = 0;
+        puts("Available commands:");
+        puts("\tclear");
+        puts("\tls (options: -l, -a, -la)");
+        puts("\tcd <path>");
+        puts("\tput <path>");
+        puts("\tget <path>");
+        puts("\texit");
+        return "";
+    } else {
+        *comm = 0;
+        printf("%s",com);
+        puts(": command not found.");
+        return "";
+    }
+
+    if(*comm == 1 && buffer[2] != '\0') {
+        // We got an LS. And it has some parameters! Time to check them.
+        for(i = 4; buffer[i] != '\0'; i++) {
+        // We initialize i as 4 because we want to ignore the - (ls -la, or ls -l).
+            if(i == 7) {
+                // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
+                *comm = 0;
+                puts("Ls can't have more than 2 arguments.");
+                return "";
+            }
+            arg[i-4] = buffer[i];
+        }
+        return arg;
+    } else {
+        // Cd, put and get have a path as parameter. Time to read it!
+        int x = (*comm == 2) ? 3 : 4;
+        // This inline if is to dont read a space in put and get (they have 1 more digit than cd).
+        for(i=x; buffer[i] != '\0'; i++)
+            arg[i-x] = buffer[i];
+        return arg;
+    }
+
+    return arg;
+}
+
 int count_slash(unsigned char* c, int len) {
     int i,count=0;
     for(i=0; i<len; ++i) {
