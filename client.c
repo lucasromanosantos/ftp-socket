@@ -1,5 +1,3 @@
-
-
 void send_string(int socket);
 
 void operate_client(int socket) {
@@ -103,10 +101,12 @@ int listen_ls(int socket) {
     unsigned char *c;
     int size = 0;
     int i=0;
-    c = malloc(size);
+    //c = malloc(size); This might be the problem. We changed size to 0. Dont know why, but..
+    c = malloc(MAX_DATA_LEN * sizeof(unsigned char));
     m = malloc_msg(MAX_DATA_LEN);
     m = wait_data(socket, m);
-    strcpy(c, ""); // we have to initialize c or the first char will be garbage
+    //strcpy(c, ""); // we have to initialize c or the first char will be garbage
+    c[0] = '\0'; // Better way to initialize an empty string.
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
             puts("(listen_ls) Problem receiving message.");

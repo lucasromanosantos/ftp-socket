@@ -320,6 +320,7 @@ int load_interface() {
     printf("\t4- Get file.\n");
     printf("\t5- ls -la (temp test).\n");
     scanf("%d", &i);
+    flush_buf();
     return i;
 }
 

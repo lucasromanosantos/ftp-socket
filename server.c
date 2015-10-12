@@ -1,6 +1,6 @@
 #include "files.c"
 
-void send_ls(int socket) {
+void send_ls_data(int socket) {
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
@@ -13,17 +13,17 @@ void send_ls(int socket) {
     int seq = 0;
 
     Message *m; // check allocation / realloc???
+    m = malloc_msg(MAX_DATA_LEN);
     Attr attrs;
     while(nob > 0) {
-        if(nob >= 63) {
+        if(nob >= MAX_DATA_LEN) {
             char tmp[64];
-            attrs = prepare_attr(63, seq, TYPE_SHOWSCREEN);
-            m = malloc_msg(attrs.len);
-            strncpy(tmp, result, 63);
+            attrs = prepare_attr(MAX_DATA_LEN, seq, TYPE_SHOWSCREEN);
+            strncpy(tmp, result, MAX_DATA_LEN);
             m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
-            result += 63; // add 63 bytes to result pointer
-            nob -= 63;
+            result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
+            nob -= MAX_DATA_LEN;
         }
         else {
             char tmp[nob + 1];
@@ -73,19 +73,18 @@ void operate_server(int socket) {
             //printf("Paridade calculada: %d \n", (int) par);
             //printf("Paridade mensagem: %d \n", (int) m->par);
             if((int)par != (int)m->par) {
-                //printf("\tError in parity! Please resend the message!\n\tSending nack...\n");
-                //send_nack(socket);
+                send_nack(socket);
                 printf("\t(operate_server) Nack sent.");
             }
             else {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
-                    puts("\t(operate_server) Ready to receive a Ls. Ack sent.");
-                    send_ls(socket);
+                    puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
+                    send_ls_data(socket);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client request LS
                     send_ack(socket);
-                    puts("\t(operate_server) Ready to receive a Cd. Ack sent.");
+                    puts("\t(operate_server) Received Cd. Ack sent.");
                 } else if (m->attr.type == TYPE_PUT) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");

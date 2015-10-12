@@ -5,7 +5,7 @@
 #include "client.c"
 
 void operate_ls(int socket) {
-	send_ls(socket);
+	send_ls_data(socket);
 }
 
 void operate_alone(int socket) {
