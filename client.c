@@ -134,9 +134,9 @@ Message* wait_data(int socket,Message* m) {
     }
     else {
         puts("(wait_data) Error! Timeout? \n");
-        m->attr = prepare_attr(0,0,TYPE_ERROR);
+        m2->attr = prepare_attr(0,0,TYPE_ERROR);
         free(buffer);
-        return m;
+        return m2;
     }
 }
 
@@ -167,6 +167,7 @@ int listen_ls(int socket) {
         else {
             //puts("(listen_ls) Can not handle this message.");
         }
+        free(m); // m will be allocated again in wait_data. - Might bug something.
         m = wait_data(socket,m);
     }
     printf("\n========= LS ======== (atualmente com ' de separador)\n");
@@ -181,7 +182,7 @@ int listen_ls(int socket) {
     }
     printf("\n");
     free(c);
-    //free(m);
+    free(m);
     return 1;
 }
 
