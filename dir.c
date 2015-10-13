@@ -158,7 +158,8 @@ char* ls(char* path, char* args) { // generic ls
     //    strcat(dir, "/");
     //}
 
-    if(args == "" || args == "a") {       // No arguments or -a
+    //if(args == "" || args == "a") {       // No arguments or -a
+    if((strcmp(args,"") == 0) || (strcmp(args,"a") == 0)) {
         int total_length = 1;
         strcpy(this, "");            // Start the buffer
         while(file = readdir(dir)) {
@@ -185,7 +186,8 @@ char* ls(char* path, char* args) { // generic ls
         }
     }
 
-    else if(args == "l" || args == "la" || args == "al") {
+    //else if(args == "l" || args == "la" || args == "al") {
+    else if((strcmp(args,"l") == 0) || (strcmp(args,"la") == 0) || (strcmp(args,"al") == 0)) {
         char *fileName, aux[64], timebuf[64];
         struct stat fileStat;
         struct tm lt;
