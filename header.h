@@ -62,5 +62,5 @@ typedef struct Message {
     unsigned char par : 8;
 } Message;
 
-char* USER;
-int CLIENT;
+char *USER,*ADDR;
+int CLIENT,SEQ;

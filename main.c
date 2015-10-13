@@ -5,7 +5,8 @@
 #include "client.c"
 
 void operate_ls(int socket) {
-	send_ls_data(socket);
+	//send_ls_data(socket);
+    printf("This is deprecated.");
 }
 
 void operate_alone(int socket) {
@@ -106,6 +107,10 @@ int main(int argc, char *argv[]) {
     pw = getpwuid (uid);
     USER = malloc(sizeof(char) * strlen(pw->pw_name) + 1);
     strcpy(USER,pw->pw_name);
+    SEQ = 0;
+
+    if((ADDR = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(main) Error allocating memory.");
 
     if(strcmp(argv[1], "client") == 0) {
         CLIENT = 1;

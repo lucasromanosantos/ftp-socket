@@ -1,7 +1,8 @@
 #include "utils.c"
 
 int print_message(Message *m) {
-    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n",
+        m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
     return 1;
 }
 
@@ -81,49 +82,6 @@ void send_nack(int socket) {
     free(m);
     return ;
 }
-
-int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
-	unsigned char *buffer;
-	time_t seconds = 3,endwait;
-	int i;
-	Message *m; // check
-
-    endwait = time(NULL) + seconds;
-    if((buffer = malloc(1024)) == NULL)
-        return 0;
-    m = malloc_msg(0);
-
-	while(time(NULL) < endwait && i != 1)
-		i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
-
-	if(i == 1) {
-		if(m->attr.type == TYPE_ACK) { // got ack
-			puts("(wait_response) Got an ack! \n");
-            free(buffer);
-            free(m);
-			return 1;
-		}
-		else if(m->attr.type == TYPE_NACK) {
-			puts("(wait_response) Got a nack! \n");
-            free(buffer);
-            free(m);
-			return 0;
-		}
-		else {
-			puts("(wait_response) Panic!!\n");
-            free(buffer);
-            free(m);
-			return -1;
-		}
-	}
-	else {
-		puts("(wait_response) Error! Timeout? \n");
-        free(buffer);
-        free(m);
-		return 0;
-	}
-}
-
 int send_msg(int socket, Message *m) {
     int i,cont = 0;
     ssize_t n;
@@ -216,6 +174,52 @@ int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
         }
     }
 }
+
+int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
+    unsigned char *buffer;
+    time_t seconds = 3,endwait;
+    int i;
+    Message *m; // check
+
+    endwait = time(NULL) + seconds;
+    if((buffer = malloc(1024)) == NULL)
+        return 0;
+    m = malloc_msg(0);
+
+    while(time(NULL) < endwait && i != 1)
+        i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
+
+    if(i == 1) {
+        if(m->attr.type == TYPE_ACK) { // got ack
+            puts("(wait_response) Got an ack! \n");
+            free(buffer);
+            free(m);
+            return 1;
+        } else if(m->attr.type == TYPE_NACK) {
+            puts("(wait_response) Got a nack! \n");
+            free(buffer);
+            free(m);
+            return 0;
+        } else if(m->attr.type == TYPE_ERROR) {
+            puts("(wait_response) Got an error! \n");
+            free(buffer);
+            free(m);
+            return -1;
+        } else {
+            puts("(wait_response) Panic!!\n");
+            free(buffer);
+            free(m);
+            return -2;
+        }
+    }
+    else {
+        puts("(wait_response) Error! Timeout? \n");
+        free(buffer);
+        free(m);
+        return 0;
+    }
+}
+
 
 /*DATA
 ||||||||

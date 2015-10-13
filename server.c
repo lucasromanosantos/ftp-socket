@@ -1,13 +1,15 @@
 #include "files.c"
+#include "dir.c"
 
-void send_ls_data(int socket) {
+void send_ls_data(int socket,char *args) {
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
         puts("(send_ls) Unable to allocate memory");
         return;
     }
-    get_files(".", result);
+    //get_files(".", result);
+    ls(ADDR,args);
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
     int seq = 1;
@@ -62,32 +64,42 @@ void operate_server(int socket) {
         error("(operate_server) Error allocating memory.");
     m = malloc_msg(0);
 
-    addr[0] = '.';
-    addr[1] = '/';
-    addr[2] = '\0';
+    ADDR[0] = '.';
+    ADDR[1] = '/';
+    ADDR[2] = '\0';
 
     while(1) {
         res = recv_tm(socket, buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
             par = get_parity(m);
-            //printf("Paridade calculada: %d \n", (int) par);
-            //printf("Paridade mensagem: %d \n", (int) m->par);
             if((int)par != (int)m->par) {
                 send_nack(socket);
                 printf("\t(operate_server) Nack sent.");
-            }
-            else {
+            } else {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
-                    send_ls_data(socket);
+                    send_ls_data(socket,m->data);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Received Cd. Ack sent.");
+                    if(!check_cd(m->data)) {
+                        puts("\t(operate_server) Cd path was wrong. Error occured.");
+                        Attr a;
+                        a.len = 0;
+                        a.type = TYPE_ERROR;
+                        a.seq = SEQ;
+                        SEQ++;
+                        m = prepare_msg(a,"");
+                        send_msg(socket,m);
+                    } else {
+                        puts("\t(operate_server) Path updated succesfully.");
+                    }
                 } else if (m->attr.type == TYPE_PUT) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
+                    strcpy(addr,ADDR); // Concatenating file name.
                     strcat(addr,m->data); // Concatenating file name.
                     FILE *fp;
                     if((fp = fopen(addr,"w")) == NULL) {
