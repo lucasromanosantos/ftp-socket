@@ -20,12 +20,6 @@ void operate_client(int socket) {
             if(*comm == 1) {
                 // Deve executar ls local. Nao implementado.
                 print_ls(ls(LocalPath,args));
-                //print_ls(data);
-                /*puts("(operate_client) Sending ls request.");
-                while(req_ls(socket) == 0);
-                    //printf("(operate_client) Not able to send a LS request.");
-                puts("(operate_client) Listening to ls...");
-                listen_ls(socket);*/
             } else if(*comm == 2) {
                 // Deve executar cd local. Nao implementado.
                 /*puts("(operate_client) Sending cd request.");
@@ -174,6 +168,7 @@ int listen_ls(int socket) {
             puts("(listen_ls) Problem receiving message.");
             send_nack(socket);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
+            printf("recebeu 1 msg\n");
             size += (int) m->attr.len;
             printf("(listen_ls) Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
