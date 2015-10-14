@@ -5,37 +5,52 @@ void operate_client(int socket) {
     int i,length,*comm;
     //int *seq;
     unsigned char *args;
+    //char *data;
     //seq = malloc(sizeof(int));
     comm = malloc(sizeof(int));
     args = malloc(sizeof(unsigned char) * 64);
     while(1) {
         *comm = 0;
-        while(*comm <= 0 || *comm >= 6) {
+        while(*comm <= 0 || *comm >= 7) {
             //i = load_interface();
             args = show_interface(comm);
+            printf("Comm: %d - Args: '%s'\n",*comm,args);
             //*seq = 0;
             if(*comm == 1) {
+                // Deve executar ls local. Nao implementado.
+                print_ls(ls(LocalPath,args));
+                //print_ls(data);
+                /*puts("(operate_client) Sending ls request.");
+                while(req_ls(socket) == 0);
+                    //printf("(operate_client) Not able to send a LS request.");
+                puts("(operate_client) Listening to ls...");
+                listen_ls(socket);*/
+            } else if(*comm == 2) {
+                // Deve executar cd local. Nao implementado.
+                /*puts("(operate_client) Sending cd request.");
+                req_cd(socket,args);*/
+            } else if(*comm == 3) {
                 puts("(operate_client) Sending ls request.");
                 while(req_ls(socket) == 0);
                     //printf("(operate_client) Not able to send a LS request.");
                 puts("(operate_client) Listening to ls...");
                 listen_ls(socket);
-            } else if(*comm == 2) {
+            } else if(*comm == 4) {
                 puts("(operate_client) Sending cd request.");
                 req_cd(socket,args);
-            } else if(*comm == 3) {
+            } else if(*comm == 5) {
                 puts("(operate_client) Sending put request.");
                 fp = open_file();
                 //length = send_filesize(socket,fp,seq);
                 //if(send_file(socket,fp,length,seq) != 1)
-                length = send_filesize(socket,fp,&SEQ); // Maybe I should change the parameters in the function, not here.
-                if(send_file(socket,fp,length,&SEQ) != 1) // Maybe I should change the parameters in the function, not here.
+                length = send_filesize(socket,fp,&Seq); // Maybe I should change the parameters in the function, not here.
+                if(send_file(socket,fp,length,&Seq) != 1) // Maybe I should change the parameters in the function, not here.
                     puts("(operate_client) Could not send file.");
-            } else if(*comm == 4) {
+            } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");
                 //open_file(socket);
                 send_string(socket);
-            } else if(*comm == 5) {
+            } else if(*comm == 7) {
                 char *s;
                 s = ls("./", " ");
                 printf("imprimindo: ... \n");

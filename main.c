@@ -105,31 +105,40 @@ int main(int argc, char *argv[]) {
 
     uid = geteuid ();
     pw = getpwuid (uid);
-    USER = malloc(sizeof(char) * strlen(pw->pw_name) + 1);
-    strcpy(USER,pw->pw_name);
-    SEQ = 0;
+    User = malloc(sizeof(char) * strlen(pw->pw_name) + 1);
+    strcpy(User,pw->pw_name);
+    Seq = 0;
 
-    if((ADDR = malloc(sizeof(unsigned char) * 1024)) == NULL)
+    if((LocalPath = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(main) Error allocating memory.");
+    if((RemPath = malloc(sizeof(unsigned char) * 1024)) == NULL)
         error("(main) Error allocating memory.");
 
+    LocalPath[0] = '.';
+    LocalPath[1] = '/';
+    LocalPath[2] = '\0';
+    RemPath[0] = '.';
+    RemPath[1] = '/';
+    RemPath[2] = '\0';
+
     if(strcmp(argv[1], "client") == 0) {
-        CLIENT = 1;
+        IsClient = 1;
         operate_client(socket);
     }
     else if(strcmp(argv[1], "server") == 0) {
-        CLIENT = 0;
+        IsClient = 0;
         operate_server(socket);
     }
     else if(strcmp(argv[1], "alone") == 0) {
-        CLIENT = 0;
+        IsClient = 0;
         operate_alone(socket);
     }
     else if(strcmp(argv[1], "ls") == 0) {
-        CLIENT = 0;
+        IsClient = 0;
         operate_ls(socket);
     }
     else if(strcmp(argv[1], "teste") == 0) {
-        CLIENT = 0;
+        IsClient = 0;
         int *x = malloc(sizeof(int));
         unsigned char *c = malloc(sizeof(unsigned char) * 32);
         c = operate_test(socket,x);

@@ -78,10 +78,10 @@ unsigned char* show_interface(int *comm) {
     char com[6], *arg; // Command and arguments
     int i = 0;
 
-    if(CLIENT)
-        printf("%s@client:%s$ ",USER,ADDR);
+    if(IsClient)
+        printf("%s@client:%s$ ",User,LocalPath);
     else
-        printf("%s@server:%s$ ",USER,ADDR);
+        printf("%s@server:%s$ ",User,LocalPath);
 
     fgets(buffer,1024,stdin);
     buffer[strlen(buffer) - 1] = '\0';
@@ -101,10 +101,14 @@ unsigned char* show_interface(int *comm) {
         *comm = 1;
     } else if(strcmp(com, "cd") == 0) {
         *comm = 2;
-    } else if(strcmp(com, "put") == 0) {
+    } else if(strcmp(com, "rls") == 0) {
         *comm = 3;
-    } else if(strcmp(com, "get") == 0) {
+    } else if(strcmp(com, "rcd") == 0) {
         *comm = 4;
+    } else if(strcmp(com, "put") == 0) {
+        *comm = 5;
+    } else if(strcmp(com, "get") == 0) {
+        *comm = 6;
     } else if(strcmp(com, "exit") == 0) {
         exit(0);
     } else if(strcmp(com, "clear") == 0) {
@@ -117,6 +121,8 @@ unsigned char* show_interface(int *comm) {
         puts("\tclear");
         puts("\tls (options: -l, -a, -la)");
         puts("\tcd <path>");
+        puts("\trls (options: -l, -a, -la)");
+        puts("\trcd <path>");
         puts("\tput <path>");
         puts("\tget <path>");
         puts("\texit");
@@ -128,20 +134,22 @@ unsigned char* show_interface(int *comm) {
         return "";
     }
 
-    if(*comm == 1 && buffer[2] != '\0') {
+    if((*comm == 1 && buffer[2] != '\0') || (*comm == 3 && buffer[3] != '\0')) {
         // We got an LS. And it has some parameters! Time to check them.
-        for(i = 4; buffer[i] != '\0'; i++) {
+        int rls = (*comm == 3) ? 1 : 0;
+        // If it is an rls, it has 1 more char, so, it will change like everything.
+        for(i = 4 + rls; buffer[i + rls] != '\0'; i++) {
         // We initialize i as 4 because we want to ignore the - (ls -la, or ls -l).
-            if(i == 7) {
+            if(i == 7 + rls) {
                 // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
                 *comm = 0;
                 puts("Ls can't have more than 2 arguments.");
                 return "";
             }
-            arg[i-4] = buffer[i];
+            arg[i-4-rls] = buffer[i];
         }
         return arg;
-    } else {
+    } else if (buffer[2] != '\0') {
         // Cd, put and get have a path as parameter. Time to read it!
         int x = (*comm == 2) ? 3 : 4;
         // This inline if is to dont read a space in put and get (they have 1 more digit than cd).

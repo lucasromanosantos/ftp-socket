@@ -9,7 +9,7 @@ void send_ls_data(int socket,char *args) {
         return;
     }
     //get_files(".", result);
-    ls(ADDR,args);
+    ls(LocalPath,args);
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
     int seq = 1;
@@ -64,10 +64,6 @@ void operate_server(int socket) {
         error("(operate_server) Error allocating memory.");
     m = malloc_msg(0);
 
-    ADDR[0] = '.';
-    ADDR[1] = '/';
-    ADDR[2] = '\0';
-
     while(1) {
         res = recv_tm(socket, buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
@@ -89,8 +85,8 @@ void operate_server(int socket) {
                         Attr a;
                         a.len = 0;
                         a.type = TYPE_ERROR;
-                        a.seq = SEQ;
-                        SEQ++;
+                        a.seq = Seq;
+                        Seq++;
                         m = prepare_msg(a,"");
                         send_msg(socket,m);
                     } else {
@@ -99,7 +95,7 @@ void operate_server(int socket) {
                 } else if (m->attr.type == TYPE_PUT) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
-                    strcpy(addr,ADDR); // Concatenating file name.
+                    strcpy(addr,LocalPath); // Concatenating file name.
                     strcat(addr,m->data); // Concatenating file name.
                     FILE *fp;
                     if((fp = fopen(addr,"w")) == NULL) {

@@ -96,11 +96,12 @@ int check_cd(unsigned char* c) {
  * not exist, or you do not have permission (which I doubt, cause you are sudo), error
  * (0) shall be returned, otherwise, (1) will be returned.
  */
+ // Should this use LocalPath, RemPath or not hardcoded?
     DIR *dir;
     char *tmp;
     if((tmp = malloc(sizeof(unsigned char) * 1024)) == NULL)
         error("(check_cd) Error allocating memory.");
-    strcpy(tmp,ADDR);
+    //strcpy(tmp,ADDR);
     strcat(tmp,c);
     fix_dir(tmp,strlen(tmp));
     dir = opendir(tmp);
@@ -111,7 +112,7 @@ int check_cd(unsigned char* c) {
         return 0;
     }
     // If we got here, the path is correct. So, we should update ADDR.
-    strcpy(ADDR,tmp);
+    //strcpy(ADDR,tmp);
     closedir(dir);
     free(tmp);
     return 1;
@@ -148,6 +149,8 @@ char* ls(char* path, char* args) { // generic ls
     res = malloc(sizeof(char));
     strcpy(res, "");
 
+    puts(args);
+
     dir = opendir(path);
     if(dir == NULL) {
         printf("(ls_la) Error opening directory: %s\n", strerror(errno));
@@ -177,7 +180,7 @@ char* ls(char* path, char* args) { // generic ls
                 strcat(this, "\n");
             }
             total_length += strlen(this);
-            printf("total length: %d\n", total_length);
+            //printf("total length: %d\n", total_length);
             if((res = realloc(res,total_length)) == NULL) {
                 printf("(ls_la) Unable to allocate memory.");
                 exit(-1);
@@ -277,6 +280,13 @@ char* ls(char* path, char* args) { // generic ls
 
     closedir(dir);
     return res;
+}
+
+void print_ls(char* data) {
+    int i,len = strlen(data);
+    for(i=0; i<len; i++) {
+        printf("%c",data[i]);
+    }
 }
 
 char* ls_la(char* param) {
