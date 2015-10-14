@@ -9,7 +9,7 @@ void send_ls_data(int socket,char *args) {
         return;
     }
     //get_files(".", result);
-    ls(LocalPath,args);
+    strcpy(result, ls(LocalPath,args));
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
     int seq = 1;

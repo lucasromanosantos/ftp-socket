@@ -157,6 +157,7 @@ int listen_ls(int socket) {
             puts("(listen_ls) Problem receiving message.");
             send_nack(socket);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
+            printf("recebeu 1 msg\n");
             size += (int) m->attr.len;
             printf("(listen_ls) Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);

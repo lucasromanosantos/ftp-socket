@@ -180,20 +180,14 @@ char* ls(char* path, char* args) { // generic ls
         return strerror(errno);
     }
 
-    //if((dir[strlen(dir) -1]) != '/') { // To correct directory name //BEFORE OR AFTER
-    //    strcat(dir, "/");
-    //}
-
-    //if(args == "" || args == "a") {       // No arguments or -a
     if((strcmp(args,"") == 0) || (strcmp(args,"a") == 0)) {
         int total_length = 1;
         strcpy(this, "");            // Start the buffer
         while(file = readdir(dir)) {
             strcpy(this, "");
-            if (args == "") {
+            if (strcmp(args,"") == 0) {
                 if(file->d_name[0] != '.' &&
-                    file->d_name[strlen(file->d_name) - 1] != '~') {
-                    // Eliminating hidden files and files ending in "~"
+                    file->d_name[strlen(file->d_name) - 1] != '~') { // Eliminating hidden files and files ending in "~"
                     strcat(this, file->d_name);
                     strcat(this, "\n");
                 }
@@ -225,11 +219,10 @@ char* ls(char* path, char* args) { // generic ls
         int total_length = 1;
 
         while((file = readdir(dir)) != NULL) {
-            if ((args == "l" && (file->d_name[0] != '.' && file->d_name[strlen(file->d_name) - 1] != '~'))
-                    || args == "la" || args == "al") { // Eliminating hidden files and files ending in "~")
+            if (( (strcmp(args,"l") == 0) && (file->d_name[0] != '.' && file->d_name[strlen(file->d_name) - 1] != '~'))
+                    || (strcmp(args, "la") == 0) || (strcmp(args, "al") == 0)) { // Eliminating hidden files and files ending in "~")
                 strcpy(fileName, path);
                 strcat(fileName,file->d_name);
-                printf("(ls) filename = %s \n", fileName);
                 if(stat(fileName, &fileStat) != 0) {
                     printf("(ls) Erro na syscall stat!\n");
                     return;
