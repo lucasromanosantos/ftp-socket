@@ -8,12 +8,13 @@ void operate_client(int socket) {
     //char *data;
     //seq = malloc(sizeof(int));
     comm = malloc(sizeof(int));
-    args = malloc(sizeof(unsigned char) * 64);
+    args = malloc(sizeof(unsigned char) * 1024);
     while(1) {
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
             //i = load_interface();
-            args = show_interface(comm);
+            //args[0] = '\0';
+            args = show_interface(comm,args);
             printf("Comm: %d - Args: '%s'\n",*comm,args);
             //*seq = 0;
             if(*comm == 1) {
@@ -57,7 +58,7 @@ void operate_client(int socket) {
                 printf("%s \n", s);
             } else {
                 puts("(operate_client) Invalid option. Please, type another number.");
-                args = show_interface(comm);
+                args = show_interface(comm,args);
             }
         }
     }

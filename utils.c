@@ -72,10 +72,10 @@ int load_interface() {
     return i;
 }
 
-unsigned char* show_interface(int *comm) {
+unsigned char* show_interface(int *comm,char *arg) {
     // Watch out! *comm has to come already allocated.
     char buffer[1024]; // Total buffer and argument
-    char com[6], *arg; // Command and arguments
+    char com[6];//, *arg; // Command and arguments
     int i = 0;
 
     if(IsClient)
@@ -86,7 +86,7 @@ unsigned char* show_interface(int *comm) {
     fgets(buffer,1024,stdin);
     buffer[strlen(buffer) - 1] = '\0';
 
-    arg = malloc(sizeof(unsigned char) * 1024);
+    //arg = malloc(sizeof(unsigned char) * 1024);
     arg[0] = '\0';
 
     //printf("buffer: %s \n", buffer);
