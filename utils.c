@@ -72,22 +72,29 @@ int load_interface() {
     return i;
 }
 
-unsigned char* show_interface(int *comm,char *arg) {
+unsigned char* show_interface(int *comm,char *arg,char *buffer) {
     // Watch out! *comm has to come already allocated.
-    char buffer[1024]; // Total buffer and argument
     char com[6];//, *arg; // Command and arguments
-    int i = 0;
+    int i = 0,len = strlen(buffer);
 
     if(IsClient)
         printf("%s@client:%s$ ",User,LocalPath);
     else
         printf("%s@server:%s$ ",User,LocalPath);
 
+    for(i=0; i<len; i++) {
+        buffer[i] = '\0';
+    }
+
     fgets(buffer,1024,stdin);
     buffer[strlen(buffer) - 1] = '\0';
+    printf("Buffer: ");
+    puts(buffer);
 
-    //arg = malloc(sizeof(unsigned char) * 1024);
-    arg[0] = '\0';
+    len = strlen(arg);
+    for(i=0; i<len; i++)
+        arg[i] = '\0';
+    i=0;
 
     //printf("buffer: %s \n", buffer);
     while(i < 5 && buffer[i] != ' ' && buffer[i] != '\0') {
@@ -95,6 +102,7 @@ unsigned char* show_interface(int *comm,char *arg) {
         i++;
     }
     com[i] = '\0';
+    puts(com);
     //printf("printf ls: %s\n", com);
 
     if(strcmp(com, "ls") == 0) {
@@ -113,7 +121,7 @@ unsigned char* show_interface(int *comm,char *arg) {
         exit(0);
     } else if(strcmp(com, "clear") == 0) {
         system("clear");
-        *comm = 0;
+        *comm = 7;
         return "";
     } else if(strcmp(com, "help") == 0) {
         *comm = 0;

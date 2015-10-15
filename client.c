@@ -3,27 +3,20 @@ void send_string(int socket);
 void operate_client(int socket) {
     FILE *fp;
     int i,length,*comm;
-    //int *seq;
-    unsigned char *args;
-    //char *data;
-    //seq = malloc(sizeof(int));
+    unsigned char *args,*buf;
     comm = malloc(sizeof(int));
+    buf = malloc(sizeof(unsigned char) * 1024);
     args = malloc(sizeof(unsigned char) * 1024);
+
     while(1) {
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
-            //i = load_interface();
-            //args[0] = '\0';
-            args = show_interface(comm,args);
+            args = show_interface(comm,args,buf);
             printf("Comm: %d - Args: '%s'\n",*comm,args);
-            //*seq = 0;
             if(*comm == 1) {
-                // Deve executar ls local. Nao implementado.
                 print_ls(ls(LocalPath,args));
             } else if(*comm == 2) {
-                // Deve executar cd local. Nao implementado.
-                /*puts("(operate_client) Sending cd request.");
-                req_cd(socket,args);*/
+                check_cd(args);
             } else if(*comm == 3) {
                 puts("(operate_client) Sending ls request.");
                 while(req_ls(socket, args) == 0);
@@ -45,14 +38,10 @@ void operate_client(int socket) {
                 puts("(operate_client) Sending get request.");
                 //open_file(socket);
                 send_string(socket);
-            } else if(*comm == 7) {
-                char *s;
-                s = ls("./", " ");
-                printf("imprimindo: ... \n");
-                printf("%s \n", s);
             } else {
-                puts("(operate_client) Invalid option. Please, type another number.");
-                args = show_interface(comm,args);
+                if(*comm != 7)
+                    puts("(operate_client) Invalid option. Please, type another number.");
+                args = show_interface(comm,args,buf);
             }
         }
     }

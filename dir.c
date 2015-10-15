@@ -26,6 +26,9 @@ unsigned char** to_matrix(unsigned char *c, int n) {
     unsigned char **tmp = malloc(sizeof(unsigned char*) * n);
     for(i=0; i<n; i++) {
         tmp[i] = malloc(sizeof(unsigned char*) * FILE_LEN);
+        for(k=0; k<FILE_LEN; k++) {
+            tmp[i][k] = '\0';
+        }
     }
     //       Yes, its j, not i.
     for(i=0,k=0; j<n; i++,k++) {
@@ -43,7 +46,8 @@ unsigned char** to_matrix(unsigned char *c, int n) {
 unsigned char* to_vector(unsigned char **c, int n) {
     int i,size = 1024;
     unsigned char *tmp = malloc(sizeof(unsigned char) * size);
-    tmp[0] = '\0';
+    for(i=0; i<size; i++)
+        tmp[i] = '\0';
     for(i=0; i<n; i++) {
         if(strlen(tmp) + strlen(c[i]) > size) { // To prevent overflows.
             size = size * 2;
@@ -52,6 +56,10 @@ unsigned char* to_vector(unsigned char **c, int n) {
         strcat(tmp,c[i]);
         strcat(tmp,"/");
     }
+    for(i=0; i<n; i++) {
+        free(c[i]);
+    }
+    free(c);
     return tmp;
 }
 
@@ -60,7 +68,7 @@ unsigned char* fix_dir(unsigned char *c, int length) {
     unsigned char **tmp;
     tmp = to_matrix(c,n);
     // Now I have a matrix from the path, with n lines and unknown number of columns.
-    for(i=1; i<n; i++) { // If tmp[0] == ../, theres nothing I can do with it.
+    for(i=2; i<n; i++) { // If tmp[0] == ../, theres nothing I can do with it.
         if(strcmp(tmp[i],"..") == 0 && strcmp(tmp[i-1],"..") != 0) {
             for(j=i; j<n; j++) {
                 tmp[j-1] = tmp[j];
@@ -70,7 +78,7 @@ unsigned char* fix_dir(unsigned char *c, int length) {
                 tmp[j-1] = tmp[j];
             }
             n--;
-            i = 1; // So a/b/c/../../ will remove b and c and both ../, not only c.
+            i = 2; // So a/b/c/../../ will remove b and c and both ../, not only c.
         }
     }
     c = to_vector(tmp,n);
@@ -96,14 +104,26 @@ int check_cd(unsigned char* c) {
  * not exist, or you do not have permission (which I doubt, cause you are sudo), error
  * (0) shall be returned, otherwise, (1) will be returned.
  */
- // Should this use LocalPath, RemPath or not hardcoded?
     DIR *dir;
     char *tmp;
+    int len;
+
+    if(strlen(c) == 0) return;
     if((tmp = malloc(sizeof(unsigned char) * 1024)) == NULL)
         error("(check_cd) Error allocating memory.");
-    //strcpy(tmp,ADDR);
+    len = strlen(c);
+    if(c[len-1] != '/') {
+        c[len] = '/';
+        c[len+1] = '\0';
+    }
+    strcpy(tmp,LocalPath);
     strcat(tmp,c);
-    fix_dir(tmp,strlen(tmp));
+    tmp = fix_dir(tmp,strlen(tmp));
+    /*len = strlen(tmp);
+    if(tmp[len-1] != '/') {
+        tmp[len] = '/';
+        tmp[len+1] = '\0';
+    }*/
     dir = opendir(tmp);
     if(dir == NULL) {
         // Problem. Server should send an error message (outside this function!).
@@ -111,8 +131,11 @@ int check_cd(unsigned char* c) {
         free(tmp);
         return 0;
     }
+    printf("Tmp and Localpath are :\n");
+    puts(tmp);
     // If we got here, the path is correct. So, we should update ADDR.
-    //strcpy(ADDR,tmp);
+    strcpy(LocalPath,tmp);
+    puts(LocalPath);
     closedir(dir);
     free(tmp);
     return 1;
