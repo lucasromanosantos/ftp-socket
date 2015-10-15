@@ -1,6 +1,6 @@
 unsigned int get_file_size(FILE *fp);
-int send_file(FILE *fp,int len,int *seq);
-int send_filesize(FILE *fp,int *seq);
+int send_file(FILE *fp,int len);
+int send_filesize(FILE *fp);
 FILE* open_file();
 unsigned char* read_file(FILE *fp,unsigned int size);
 void write_file(FILE *fp,unsigned char *c,int size);
@@ -50,7 +50,7 @@ int main() {
 	return 0;
 }
 */
-int send_file(FILE *fp,int len,int *seq) {
+int send_file(FILE *fp,int len) {
 	int nob = 0,i;
 	unsigned char *c;
 	Message *m;
@@ -65,25 +65,25 @@ int send_file(FILE *fp,int len,int *seq) {
 		nob = 0;
 		while(nob < MAX_DATA_LEN)
 			nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
-		a = prepare_attr(MAX_DATA_LEN,*seq,TYPE_PUT);
+		a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
 		m = prepare_msg(a,c);
 		send_msg(m);
 		while(!wait_response) { // If we enter this while we got an nack, so, resend the message.
 			send_msg(m);
 		}
-		(*seq)++;
+		(Seq)++;
 	}
 	while(nob < len)
 		nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
-	a = prepare_attr(len,*seq,TYPE_PUT);
+	a = prepare_attr(len,Seq,TYPE_PUT);
 	m = prepare_msg(a,c);
 	send_msg(m);
 	while(!wait_response) {
 		send_msg(m);
 	}
-	(*seq)++;
+	(Seq)++;
 	unsigned char s[0];
-	a = prepare_attr(0,*seq,TYPE_END);
+	a = prepare_attr(0,Seq,TYPE_END);
 	m = prepare_msg(a,s);
 	send_msg(m);
 	while(!wait_response) {
@@ -94,12 +94,12 @@ int send_file(FILE *fp,int len,int *seq) {
 	return 1;
 }
 
-int send_filesize(FILE* fp,int *seq) {
+int send_filesize(FILE* fp) {
 	unsigned int length = get_file_size(fp);
 	Message *m;
 	Attr a;
 	m = malloc_msg(sizeof(unsigned int));
-	a = prepare_attr(sizeof(unsigned int),*seq,TYPE_FILESIZE);
+	a = prepare_attr(sizeof(unsigned int),Seq,TYPE_FILESIZE);
 	unsigned char s[5];
 	memcpy(s,&length,sizeof(unsigned int));
 	m = prepare_msg(a,s);
@@ -107,7 +107,7 @@ int send_filesize(FILE* fp,int *seq) {
 	while(!wait_response) {
 		send_msg(m);
 	}
-	(*seq)++;
+	(Seq)++;
 	free(m);
 	return length;
 }

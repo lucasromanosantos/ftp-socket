@@ -56,7 +56,7 @@ Attr prepare_attr(int length,int seq,int type) {
 
 unsigned char* show_interface(int *comm,char *arg,char *buffer) {
     // Watch out! *comm has to come already allocated.
-    char com[6];//, *arg; // Command and arguments
+    char com[6]; // Command
     int i = 0,len = strlen(buffer);
 
     if(IsClient)
@@ -78,13 +78,11 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
         arg[i] = '\0';
     i=0;
 
-    //printf("buffer: %s \n", buffer);
     while(i < 5 && buffer[i] != ' ' && buffer[i] != '\0') {
         com[i] = buffer[i];
         i++;
     }
     com[i] = '\0';
-    puts(com);
 
     if(strcmp(com, "ls") == 0) {
         *comm = 1;
@@ -125,17 +123,20 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
 
     if((*comm == 1 && buffer[2] != '\0') || (*comm == 3 && buffer[3] != '\0')) {
         // We got an LS. And it has some parameters! Time to check them.
-        int rls = (*comm == 3) ? 1 : 0;
-        // If it is an rls, it has 1 more char, so, it will change like everything.
-        for(i = 4 + rls; buffer[i] != '\0'; i++) {
-        // We initialize i as 4 because we want to ignore the - (ls -la, or ls -l).
-            if(i == 7 + rls) {
-                // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
+        int rls = (*comm == 3) ? 1 : 0; // If it is an rls, it has 1 more char, so, it will change, like, everything.
+        for(i = 4 + rls; buffer[i] != '\0'; i++) { // We initialize i as 4 because we want to ignore the '-' (ls -la, or ls -l).
+            if(i == 7 + rls) { // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
                 *comm = 0;
                 puts("Ls can't have more than 2 arguments.");
                 return "";
             }
-            arg[i-4-rls] = buffer[i];        }
+            arg[i-4-rls] = buffer[i];
+        }
+        if((strcmp(arg,"l") != 0) && (strcmp(arg,"a") != 0) && (strcmp(arg,"la") != 0) && (strcmp(arg,"al") != 0)) {
+            *comm = 0;
+            puts("Invalid option. Try 'help'.");
+            return "";
+        }
         return arg;
     } else if (buffer[2] != '\0') {
         // Cd, put and get have a path as parameter. Time to read it!

@@ -31,8 +31,8 @@ void operate_client() { //
                 fp = open_file();
                 //length = send_filesize(fp,seq);
                 //if(send_file(fp,length,seq) != 1)
-                length = send_filesize(fp,&Seq); // Maybe I should change the parameters in the function, not here.
-                if(send_file(fp,length,&Seq) != 1) // Maybe I should change the parameters in the function, not here.
+                length = send_filesize(fp); // Maybe I should change the parameters in the function, not here.
+                if(send_file(fp,length) != 1) // Maybe I should change the parameters in the function, not here.
                     puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");
@@ -53,7 +53,6 @@ int req_ls(char *args) {
     int i;
     m = malloc_msg(0); // Data is empty
     printf("(req_ls) argumentos: %s\n", args);
-    //                                0 Should be replaced by Seq.
     attrs = prepare_attr(strlen(args),Seq,TYPE_LS);
     m = prepare_msg(attrs,args);
     send_msg(m);
@@ -85,8 +84,7 @@ int req_cd(char *args) {
         return -1;
     }
     m = malloc_msg(len+1); // Data is empty
-    //                       0 Should be replaced by Seq.
-    attrs = prepare_attr(len,0,TYPE_LS);
+    attrs = prepare_attr(len,Seq,TYPE_LS);
     m = prepare_msg(attrs,args);
     print_message(m);
     scanf("%d",&i);
