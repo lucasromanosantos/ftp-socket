@@ -26,7 +26,7 @@ void operate_client(int socket) {
                 req_cd(socket,args);*/
             } else if(*comm == 3) {
                 puts("(operate_client) Sending ls request.");
-                while(req_ls(socket) == 0);
+                while(req_ls(socket, args) == 0);
                     //printf("(operate_client) Not able to send a LS request.");
                 puts("(operate_client) Listening to ls...");
                 listen_ls(socket);
@@ -58,13 +58,20 @@ void operate_client(int socket) {
     }
 }
 
-int req_ls(int socket) {
+int req_ls(int socket, char *args) {
     Message *m;
     Attr attrs;
     int i;
     m = malloc_msg(0); // Data is empty
-    attrs = prepare_attr(0,0,TYPE_LS);
-    m = prepare_msg(attrs, "");
+    printf("(req_ls) argumentos: %s\n", args);
+    if(strcmp(args, "a") == 0) {
+        attrs = prepare_attr(3,0,TYPE_LS);
+    } else if ( (strcmp(args, "l") == 0) || (strcmp(args, "la") == 0) || (strcmp(args, "al") == 0) ) {
+        attrs = prepare_attr(4,0,TYPE_LS);
+    } else {
+        attrs = prepare_attr(0,0,TYPE_LS);
+    }
+    m = prepare_msg(attrs, args);
     send_msg(socket,m);
     puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
     while(!(i = wait_response(socket)))

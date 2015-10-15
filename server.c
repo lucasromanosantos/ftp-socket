@@ -75,6 +75,7 @@ void operate_server(int socket) {
                 if (m->attr.type == TYPE_LS) { // client request LS
                     send_ack(socket);
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
+                    printf("data dentro da mensagem: %s \n", m->data);
                     send_ls_data(socket,m->data);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client request LS

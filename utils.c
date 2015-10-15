@@ -138,7 +138,7 @@ unsigned char* show_interface(int *comm,char *arg) {
         // We got an LS. And it has some parameters! Time to check them.
         int rls = (*comm == 3) ? 1 : 0;
         // If it is an rls, it has 1 more char, so, it will change like everything.
-        for(i = 4 + rls; buffer[i + rls] != '\0'; i++) {
+        for(i = 4 + rls; buffer[i] != '\0'; i++) {
         // We initialize i as 4 because we want to ignore the - (ls -la, or ls -l).
             if(i == 7 + rls) {
                 // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
@@ -146,8 +146,7 @@ unsigned char* show_interface(int *comm,char *arg) {
                 puts("Ls can't have more than 2 arguments.");
                 return "";
             }
-            arg[i-4-rls] = buffer[i];
-        }
+            arg[i-4-rls] = buffer[i];        }
         return arg;
     } else if (buffer[2] != '\0') {
         // Cd, put and get have a path as parameter. Time to read it!
