@@ -132,7 +132,7 @@ Message* wait_data(int socket,Message* m) {
 
     while(time(NULL) < endwait && i != 1 && buffer[0] != 126) {
     //while(time(NULL) < endwait && i != 1) {
-        i = recv_tm(socket, buffer, &m2, STD_TIMEOUT);
+        i = receive(socket, buffer, &m2, STD_TIMEOUT);
     }
     if(i == 1) {
         free(buffer);

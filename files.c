@@ -139,7 +139,7 @@ void receive_file(int socket,FILE *fp) {
 	buf = malloc(sizeof(unsigned char) * MAX_DATA_LEN);
 	m = malloc_msg(MAX_DATA_LEN);
 
-    res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+    res = receive(socket, buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
 	if(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
 		// This should be a while, sending nack and waiting for the right message.
@@ -149,7 +149,7 @@ void receive_file(int socket,FILE *fp) {
 	int size,i=0,j;
 	memcpy(&size,m->data,4);
 	while(i < size) {
-	    res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+	    res = receive(socket, buf, &m, STD_TIMEOUT);
 		par = get_parity(m);
 		if((int)par != (int)m->par) {
 			puts("(receive_file) Parity error or message.");
@@ -162,7 +162,7 @@ void receive_file(int socket,FILE *fp) {
 		}
 	}
 	// Read all messages, created and updated the file, I should receive a TYPE_END.
-	res = recv_tm(socket, buf, &m, STD_TIMEOUT);
+	res = receive(socket, buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
 	if(((int)par != (int)m->par) || (m->attr.type != TYPE_END)) {
 		// This should be a while, sending nack and waiting for the right message.

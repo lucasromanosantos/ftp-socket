@@ -2,19 +2,18 @@
 #include "dir.c"
 
 void send_ls_data(int socket,char *args) { //
-    char *result = malloc(1024); // temp size.. realloc maybe??
+    char *result = malloc(1024);
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
         puts("(send_ls) Unable to allocate memory");
         return;
     }
-    //get_files(".", result);
     strcpy(result, ls(LocalPath,args));
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
     int seq = 1;
 
-    Message *m; // check allocation / realloc???
+    Message *m;
     m = malloc_msg(MAX_DATA_LEN);
     Attr attrs;
     while(nob > 0) {
@@ -30,11 +29,10 @@ void send_ls_data(int socket,char *args) { //
         else {
             char tmp[nob + 1];
             attrs = prepare_attr(nob, seq, TYPE_SHOWSCREEN);
-            m = malloc_msg(attrs.len); // ou nob
+            m = malloc_msg(attrs.len);
             strncpy(tmp, result, nob);
             m = prepare_msg(attrs, tmp);
             send_msg(socket, m);
-            //result -= nob;
             nob = 0;
 
             if(wait_response(socket)) {
@@ -44,7 +42,7 @@ void send_ls_data(int socket,char *args) { //
                 send_msg(socket, m);
             }
         }
-        if(!wait_response(socket)) // fast test
+        if(!wait_response(socket))
             break;
         seq += 1;
     }
@@ -57,7 +55,7 @@ void operate_server(int socket) {
     Message *m;
 
     if((buffer2 = malloc(MIN_LEN)) == NULL)
-        error("(operate_server) Error allocating memory."); // alocar menos para ack/nack , não? e dps q receber free()
+        error("(operate_server) Error allocating memory.");
     if((buffer = malloc(MAX_MSG_LEN)) == NULL)
         error("(operate_server) Error allocating memory.");
     if((addr = malloc(sizeof(unsigned char) * 1024)) == NULL)
@@ -65,20 +63,20 @@ void operate_server(int socket) {
     m = malloc_msg(0);
 
     while(1) {
-        res = recv_tm(socket, buffer2, &m, STD_TIMEOUT);
+        res = receive(socket, buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
             par = get_parity(m);
             if((int)par != (int)m->par) {
                 send_nack(socket);
                 printf("\t(operate_server) Nack sent.");
             } else {
-                if (m->attr.type == TYPE_LS) { // client request LS
+                if (m->attr.type == TYPE_LS) { // client requested LS
                     send_ack(socket);
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     printf("data dentro da mensagem: %s \n", m->data);
                     send_ls_data(socket,m->data);
                     puts("\t(operate_server) Ls sent.");
-                } else if (m->attr.type == TYPE_CD) { // client request LS
+                } else if (m->attr.type == TYPE_CD) { // client requested CD
                     send_ack(socket);
                     puts("\t(operate_server) Received Cd. Ack sent.");
                     if(!check_cd(m->data)) {

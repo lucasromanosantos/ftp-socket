@@ -1,5 +1,96 @@
 #include "utils.c"
 
+int print_message(Message *m);
+Message* malloc_msg(int length);
+int msg_length(Message *m);
+char* msg_to_str(Message *m);
+Message* str_to_msg(char* c);
+Message* prepare_msg(Attr attr, unsigned char *data);
+void send_ack(int socket);
+void send_nack(int socket);
+int send_msg(int socket, Message *m);
+int receive(int socket, unsigned char *data, Message **m, int timeout);
+int wait_response(int socket);
+
+int receive(int socket, unsigned char *data, Message **m, int timeout) {
+    int retorno,rv = 0;
+    struct pollfd ufds[1];
+    ufds[0].fd = socket;
+    ufds[0].events = POLLIN; // check for just normal data
+    //rv = poll(ufds, 1, timeout);
+    rv = poll(ufds, 1, -1);
+    time_t start = time(NULL);
+    while(time(NULL) < start + 3 && rv <= 0) {
+        rv = poll(ufds,1,-1);
+    }
+    if(rv == -1)
+        error("(recv_tm) Erro no poll");
+    else if (rv == 0) {
+        puts("\t(recv_tm) Timeout! No data received! Is the server working?");
+        return 0; // Fail
+    }
+    else {
+        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
+        int tmp_recv;
+        if(ufds[0].revents & POLLIN) {
+            tmp_recv = recv(socket, data, MAX_LEN, 0);
+            if(data[0] != 126) {// 126 = 0111 1110
+              return 0; // Fail
+            }
+            Attr a;
+            memcpy(&a,data+1,2);
+            int i;
+            *m = str_to_msg(data);
+            return 1; // Success
+        }
+    }
+}
+
+int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
+    unsigned char *buffer;
+    time_t seconds = 3,endwait;
+    int i;
+    Message *m; // check
+
+    endwait = time(NULL) + seconds;
+    if((buffer = malloc(1024)) == NULL)
+        return 0;
+    m = malloc_msg(0);
+
+    while(time(NULL) < endwait && i != 1)
+        i = receive(socket, buffer, &m, STD_TIMEOUT);
+
+    if(i == 1) {
+        if(m->attr.type == TYPE_ACK) { // got ack
+            puts("(wait_response) Got an ack! \n");
+            free(buffer);
+            free(m);
+            return 1;
+        } else if(m->attr.type == TYPE_NACK) {
+            puts("(wait_response) Got a nack! \n");
+            free(buffer);
+            free(m);
+            return 0;
+        } else if(m->attr.type == TYPE_ERROR) {
+            puts("(wait_response) Got an error! \n");
+            free(buffer);
+            free(m);
+            return -1;
+        } else {
+            puts("(wait_response) Panic!!\n");
+            free(buffer);
+            free(m);
+            return -2;
+        }
+    }
+    else {
+        puts("(wait_response) Error! Timeout? \n");
+        free(buffer);
+        free(m);
+        return 0;
+    }
+}
+
 int print_message(Message *m) {
     printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n",
         m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
@@ -82,6 +173,7 @@ void send_nack(int socket) {
     free(m);
     return ;
 }
+
 int send_msg(int socket, Message *m) {
     int i,cont = 0;
     ssize_t n;
@@ -103,142 +195,3 @@ int send_msg(int socket, Message *m) {
     //free(s);
     return (n <= 0) ? - 1 : 0;
 }
-
-int receive(int socket, unsigned char *data, Message **m) {
-    int retorno,rv;
-    struct pollfd ufds[1];
-    ufds[0].fd = socket;
-    ufds[0].events = POLLIN; // check for just normal data
-    rv = poll(ufds, 1, -1); // -1 = Infinite timeout (for testing)
-    if(rv == -1)
-        error("(receive) Erro no poll");
-    else if (rv == 0) {
-        printf("(receive) Timeout! No data received");
-        return 0; // Fail
-    }
-    else {
-        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
-        int tmp_recv;
-        if(ufds[0].revents & POLLIN) {
-            tmp_recv = recv(socket, data, MAX_LEN, 0);
-            if(data[0] != 126) // 126 = 0111 1110
-                return 0; // Fail
-            *m = str_to_msg(data);
-            printf("(receive)");
-            print_message(*m);
-            return 1; // Success
-        }
-    }
-}
-
-int recv_tm(int socket, unsigned char *data, Message **m, int timeout) {
-    int retorno,rv = 0;
-    struct pollfd ufds[1];
-    ufds[0].fd = socket;
-    ufds[0].events = POLLIN; // check for just normal data
-    //rv = poll(ufds, 1, timeout);
-	rv = poll(ufds, 1, -1);
-    time_t start = time(NULL);
-    while(time(NULL) < start + 3 && rv <= 0) {
-        rv = poll(ufds,1,-1);
-    }
-    if(rv == -1)
-        error("(recv_tm) Erro no poll");
-    else if (rv == 0) {
-        puts("\t(recv_tm) Timeout! No data received! Is the server working?");
-        return 0; // Fail
-    }
-    else {
-        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
-        int tmp_recv;
-        if(ufds[0].revents & POLLIN) {
-            tmp_recv = recv(socket, data, MAX_LEN, 0);
-            //puts(data);
-            //printf("(recv_tm) Init is: %d\n",(int)(data[0]));
-            if(data[0] != 126) {// 126 = 0111 1110
-		      return 0; // Fail
-            }
-
-            // Impressão da mensagem recebida:
-            //printf("\t(recv_tm) Mensagem recebida: '");
-            Attr a;
-            memcpy(&a,data+1,2);
-            int i;
-            /*printf("\n(recv_tm) After init: %d%d - A.len = %d\n",(int)data[1],(int)data[2],a.len);
-            for(i=0; i<a.len; i++)
-                printf("%c",data[i+3]);
-            printf("'\n");*/
-
-            *m = str_to_msg(data);
-            return 1; // Success
-        }
-    }
-}
-
-int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
-    unsigned char *buffer;
-    time_t seconds = 3,endwait;
-    int i;
-    Message *m; // check
-
-    endwait = time(NULL) + seconds;
-    if((buffer = malloc(1024)) == NULL)
-        return 0;
-    m = malloc_msg(0);
-
-    while(time(NULL) < endwait && i != 1)
-        i = recv_tm(socket, buffer, &m, STD_TIMEOUT);
-
-    if(i == 1) {
-        if(m->attr.type == TYPE_ACK) { // got ack
-            puts("(wait_response) Got an ack! \n");
-            free(buffer);
-            free(m);
-            return 1;
-        } else if(m->attr.type == TYPE_NACK) {
-            puts("(wait_response) Got a nack! \n");
-            free(buffer);
-            free(m);
-            return 0;
-        } else if(m->attr.type == TYPE_ERROR) {
-            puts("(wait_response) Got an error! \n");
-            free(buffer);
-            free(m);
-            return -1;
-        } else {
-            puts("(wait_response) Panic!!\n");
-            free(buffer);
-            free(m);
-            return -2;
-        }
-    }
-    else {
-        puts("(wait_response) Error! Timeout? \n");
-        free(buffer);
-        free(m);
-        return 0;
-    }
-}
-
-
-/*DATA
-||||||||
-char* c = data;
-c++;
-
-recebeu algo
-if(strlen(buf) > 8) le init
-else espera_mais_dado
-strlen(buf) -= 8;
-
---
-if(strlen(buf) > 6) le len
-....
-if(strlen(buf) > 6) le seq
-...
-le tipo
-...
-if(strlen(buf) > len) le dados
-...
-if(strlen(buf) > 8) le paridade
-*/

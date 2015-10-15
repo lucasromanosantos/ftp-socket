@@ -1,18 +1,13 @@
 #include <math.h>
 
 void flush_buf();
-int get_files(char *path, char *c);
 int pot(int base, int exp);
 unsigned char get_parity(Message *m);
 void error(const char *msg);
 size_t strlen2(const char *p);
 Attr prepare_attr(int length,int seq,int type);
-int load_interface();
-int count_slash(unsigned char* c, int len);
-unsigned char* return_dir(unsigned char *c, int length);
 
-void flush_buf() {
-    // Removes a remaining \n from stdin (in case we do a scanf("%d"))
+void flush_buf() { // Removes a remaining \n from stdin (in case we do a scanf("%d"))
     char c;
     while((c = getchar()) != '\n');
     return ;
@@ -57,19 +52,6 @@ Attr prepare_attr(int length,int seq,int type) {
     a.seq = seq;
     a.type = type;
     return a;
-}
-
-int load_interface() {
-    int i;
-    printf("What would you like to do ?\n");
-    printf("\t1- Remote ls.\n");
-    printf("\t2- Remote cd.\n");
-    printf("\t3- Send file.\n");
-    printf("\t4- Get file.\n");
-    printf("\t5- ls -la (temp test).\n");
-    scanf("%d", &i);
-    flush_buf();
-    return i;
 }
 
 unsigned char* show_interface(int *comm,char *arg,char *buffer) {
@@ -165,40 +147,4 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
     }
 
     return arg;
-}
-
-int count_slash(unsigned char* c, int len) {
-    int i,count=0;
-    for(i=0; i<len; ++i) {
-        if(c[i] == '/') {
-            count++;
-        }
-    }
-    return count;
-}
-
-unsigned char* return_dir(unsigned char *c, int length) {
-    // We should call this if the client send a "cd .."
-    int count = count_slash(c,length);
-    if(count == 0)
-        return c = strcat(c,"../");
-    // If we got here, we have a dir in cd. Ex: ./bin/
-    int i;
-    unsigned char *aux = malloc(sizeof(char) * 3);
-    count = 0;
-    for(i=length-2; c[i] != '/'; i--) { // Checking if the dir is something like: ./../
-        count++;
-        if(c[i] != '.') {
-            break;
-        }
-    }
-    if(count == 2) {
-        return c = strcat(c,"../");
-    }
-    // If it was "./bin/", we go back one directory -> "./"
-    // Length -2 because c[length] == '\0' and c[length-1] == '/' (.../bin'/')
-    for(i=length-2; c[i]!='/'; i--) {
-        c[i] = '\0';
-    }
-    return c;
 }
