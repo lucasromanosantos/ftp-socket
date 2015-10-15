@@ -53,14 +53,10 @@ int req_ls(int socket, char *args) {
     int i;
     m = malloc_msg(0); // Data is empty
     printf("(req_ls) argumentos: %s\n", args);
-    if(strcmp(args, "a") == 0) {
-        attrs = prepare_attr(3,0,TYPE_LS);
-    } else if ( (strcmp(args, "l") == 0) || (strcmp(args, "la") == 0) || (strcmp(args, "al") == 0) ) {
-        attrs = prepare_attr(4,0,TYPE_LS);
-    } else {
-        attrs = prepare_attr(0,0,TYPE_LS);
-    }
-    m = prepare_msg(attrs, args);
+    //                                0 Should be replaced by Seq.
+    attrs = prepare_attr(strlen(args),0,TYPE_LS);
+    m = prepare_msg(attrs,args);
+    print_message(m);
     send_msg(socket,m);
     puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
     while(!(i = wait_response(socket)))
