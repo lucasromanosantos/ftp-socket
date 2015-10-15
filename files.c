@@ -1,10 +1,10 @@
 unsigned int get_file_size(FILE *fp);
-int send_file(int socket,FILE *fp,int len,int *seq);
-int send_filesize(int socket,FILE *fp,int *seq);
+int send_file(FILE *fp,int len,int *seq);
+int send_filesize(FILE *fp,int *seq);
 FILE* open_file();
 unsigned char* read_file(FILE *fp,unsigned int size);
 void write_file(FILE *fp,unsigned char *c,int size);
-void receive_file(int socket,FILE *fp);
+void receive_file(FILE *fp);
 
 unsigned int get_file_size(FILE *fp) {
     int sz = 0;
@@ -50,7 +50,7 @@ int main() {
 	return 0;
 }
 */
-int send_file(int socket,FILE *fp,int len,int *seq) {
+int send_file(FILE *fp,int len,int *seq) {
 	int nob = 0,i;
 	unsigned char *c;
 	Message *m;
@@ -67,9 +67,9 @@ int send_file(int socket,FILE *fp,int len,int *seq) {
 			nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
 		a = prepare_attr(MAX_DATA_LEN,*seq,TYPE_PUT);
 		m = prepare_msg(a,c);
-		send_msg(socket,m);
+		send_msg(m);
 		while(!wait_response) { // If we enter this while we got an nack, so, resend the message.
-			send_msg(socket,m);
+			send_msg(m);
 		}
 		(*seq)++;
 	}
@@ -77,24 +77,24 @@ int send_file(int socket,FILE *fp,int len,int *seq) {
 		nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
 	a = prepare_attr(len,*seq,TYPE_PUT);
 	m = prepare_msg(a,c);
-	send_msg(socket,m);
+	send_msg(m);
 	while(!wait_response) {
-		send_msg(socket,m);
+		send_msg(m);
 	}
 	(*seq)++;
 	unsigned char s[0];
 	a = prepare_attr(0,*seq,TYPE_END);
 	m = prepare_msg(a,s);
-	send_msg(socket,m);
+	send_msg(m);
 	while(!wait_response) {
-		send_msg(socket,m);
+		send_msg(m);
 	}
 	free(c);
 	free(m);
 	return 1;
 }
 
-int send_filesize(int socket,FILE* fp,int *seq) {
+int send_filesize(FILE* fp,int *seq) {
 	unsigned int length = get_file_size(fp);
 	Message *m;
 	Attr a;
@@ -103,9 +103,9 @@ int send_filesize(int socket,FILE* fp,int *seq) {
 	unsigned char s[5];
 	memcpy(s,&length,sizeof(unsigned int));
 	m = prepare_msg(a,s);
-	send_msg(socket,m);
+	send_msg(m);
 	while(!wait_response) {
-		send_msg(socket,m);
+		send_msg(m);
 	}
 	(*seq)++;
 	free(m);
@@ -131,7 +131,7 @@ FILE* open_file() {
     return fp;
 }
 
-void receive_file(int socket,FILE *fp) {
+void receive_file(FILE *fp) {
 	int res = 0;
 	Message *m;
 	unsigned char *buf,par;
@@ -139,7 +139,7 @@ void receive_file(int socket,FILE *fp) {
 	buf = malloc(sizeof(unsigned char) * MAX_DATA_LEN);
 	m = malloc_msg(MAX_DATA_LEN);
 
-    res = receive(socket, buf, &m, STD_TIMEOUT);
+    res = receive(buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
 	if(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
 		// This should be a while, sending nack and waiting for the right message.
@@ -149,20 +149,20 @@ void receive_file(int socket,FILE *fp) {
 	int size,i=0,j;
 	memcpy(&size,m->data,4);
 	while(i < size) {
-	    res = receive(socket, buf, &m, STD_TIMEOUT);
+	    res = receive(buf, &m, STD_TIMEOUT);
 		par = get_parity(m);
 		if((int)par != (int)m->par) {
 			puts("(receive_file) Parity error or message.");
-			send_nack(socket);
+			send_nack();
 		} else {
 			for(j=0; j<m->attr.len;) // Write data received in file.
 				j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
 			i += m->attr.len;
-			send_ack(socket);
+			send_ack();
 		}
 	}
 	// Read all messages, created and updated the file, I should receive a TYPE_END.
-	res = receive(socket, buf, &m, STD_TIMEOUT);
+	res = receive(buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
 	if(((int)par != (int)m->par) || (m->attr.type != TYPE_END)) {
 		// This should be a while, sending nack and waiting for the right message.

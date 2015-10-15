@@ -85,7 +85,7 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
     }
     com[i] = '\0';
     puts(com);
-    
+
     if(strcmp(com, "ls") == 0) {
         *comm = 1;
     } else if(strcmp(com, "cd") == 0) {

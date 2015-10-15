@@ -6,16 +6,16 @@ int msg_length(Message *m);
 char* msg_to_str(Message *m);
 Message* str_to_msg(char* c);
 Message* prepare_msg(Attr attr, unsigned char *data);
-void send_ack(int socket);
-void send_nack(int socket);
-int send_msg(int socket, Message *m);
-int receive(int socket, unsigned char *data, Message **m, int timeout);
-int wait_response(int socket);
+void send_ack();
+void send_nack();
+int send_msg(Message *m);
+int receive(unsigned char *data, Message **m, int timeout);
+int wait_response();
 
-int receive(int socket, unsigned char *data, Message **m, int timeout) {
+int receive(unsigned char *data, Message **m, int timeout) {
     int retorno,rv = 0;
     struct pollfd ufds[1];
-    ufds[0].fd = socket;
+    ufds[0].fd = Socket;
     ufds[0].events = POLLIN; // check for just normal data
     //rv = poll(ufds, 1, timeout);
     rv = poll(ufds, 1, -1);
@@ -33,7 +33,7 @@ int receive(int socket, unsigned char *data, Message **m, int timeout) {
         // Read the message. If the first byte isnt the init (0111 1110), discard the message.
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
-            tmp_recv = recv(socket, data, MAX_LEN, 0);
+            tmp_recv = recv(Socket, data, MAX_LEN, 0);
             if(data[0] != 126) {// 126 = 0111 1110
               return 0; // Fail
             }
@@ -46,7 +46,7 @@ int receive(int socket, unsigned char *data, Message **m, int timeout) {
     }
 }
 
-int wait_response(int socket) { // necessitamos // function that returns 0 if nack or 1 if ack
+int wait_response() { // necessitamos // function that returns 0 if nack or 1 if ack
     unsigned char *buffer;
     time_t seconds = 3,endwait;
     int i;
@@ -58,7 +58,7 @@ int wait_response(int socket) { // necessitamos // function that returns 0 if na
     m = malloc_msg(0);
 
     while(time(NULL) < endwait && i != 1)
-        i = receive(socket, buffer, &m, STD_TIMEOUT);
+        i = receive(buffer, &m, STD_TIMEOUT);
 
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
@@ -154,27 +154,27 @@ Message* prepare_msg(Attr attr, unsigned char *data) {
     return m;
 }
 
-void send_ack(int socket) {
+void send_ack() {
     Message *m;
     m = malloc_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_ACK);
     m = prepare_msg(attr,"0");
-    send_msg(socket, m);
+    send_msg(m);
     free(m);
     return ;
 }
 
-void send_nack(int socket) {
+void send_nack() {
     Message *m;
     m = malloc_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,0,TYPE_NACK);
     m = prepare_msg(attr,"");
-    send_msg(socket, m);
+    send_msg(m);
     free(m);
     return ;
 }
 
-int send_msg(int socket, Message *m) {
+int send_msg(Message *m) {
     int i,cont = 0;
     ssize_t n;
     size_t length = msg_length(m) * 8;
@@ -183,7 +183,7 @@ int send_msg(int socket, Message *m) {
     print_message(m);
     // Actually send the message.
     while(length > 0) {
-        n = send(socket, s, length, 0);
+        n = send(Socket, s, length, 0);
         printf("\t(send_msg) %d bits enviados... \n", (int)n);
         //if(n <= 0) break; // Error
         if(n < 0) {
@@ -193,5 +193,7 @@ int send_msg(int socket, Message *m) {
         length -= n;
     }
     //free(s);
+    if(n <= 0)
+        Seq++;
     return (n <= 0) ? - 1 : 0;
 }

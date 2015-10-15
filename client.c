@@ -1,6 +1,6 @@
-void send_string(int socket);
+void send_string();
 
-void operate_client(int socket) { //
+void operate_client() { //
     FILE *fp;
     int i,length,*comm;
     unsigned char *args,*buf;
@@ -19,25 +19,25 @@ void operate_client(int socket) { //
                 check_cd(args);
             } else if(*comm == 3) {
                 puts("(operate_client) Sending ls request.");
-                while(req_ls(socket, args) == 0);
+                while(req_ls(args) == 0);
                     //printf("(operate_client) Not able to send a LS request.");
                 puts("(operate_client) Listening to ls...");
-                listen_ls(socket);
+                listen_ls();
             } else if(*comm == 4) {
                 puts("(operate_client) Sending cd request.");
-                req_cd(socket,args);
+                while(req_cd(args) == 0);
             } else if(*comm == 5) {
                 puts("(operate_client) Sending put request.");
                 fp = open_file();
-                //length = send_filesize(socket,fp,seq);
-                //if(send_file(socket,fp,length,seq) != 1)
-                length = send_filesize(socket,fp,&Seq); // Maybe I should change the parameters in the function, not here.
-                if(send_file(socket,fp,length,&Seq) != 1) // Maybe I should change the parameters in the function, not here.
+                //length = send_filesize(fp,seq);
+                //if(send_file(fp,length,seq) != 1)
+                length = send_filesize(fp,&Seq); // Maybe I should change the parameters in the function, not here.
+                if(send_file(fp,length,&Seq) != 1) // Maybe I should change the parameters in the function, not here.
                     puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");
-                //open_file(socket);
-                send_string(socket);
+                //open_file();
+                send_string();
             } else {
                 if(*comm != 7)
                     puts("(operate_client) Invalid option. Please, type another number.");
@@ -47,20 +47,19 @@ void operate_client(int socket) { //
     }
 }
 
-int req_ls(int socket, char *args) {
+int req_ls(char *args) {
     Message *m;
     Attr attrs;
     int i;
     m = malloc_msg(0); // Data is empty
     printf("(req_ls) argumentos: %s\n", args);
     //                                0 Should be replaced by Seq.
-    attrs = prepare_attr(strlen(args),0,TYPE_LS);
+    attrs = prepare_attr(strlen(args),Seq,TYPE_LS);
     m = prepare_msg(attrs,args);
-    print_message(m);
-    send_msg(socket,m);
+    send_msg(m);
     puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
-    while(!(i = wait_response(socket)))
-        send_msg(socket,m);
+    while(!(i = wait_response()))
+        send_msg(m);
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
         puts("(req_ls) Got an ack.");
@@ -77,7 +76,7 @@ int req_ls(int socket, char *args) {
     }
 }
 
-int req_cd(int socket,char *args) {
+int req_cd(char *args) {
     Message *m;
     Attr attrs;
     int i,len = strlen(args);
@@ -86,15 +85,17 @@ int req_cd(int socket,char *args) {
         return -1;
     }
     m = malloc_msg(len+1); // Data is empty
-    attrs = prepare_attr(0,len,TYPE_LS);
+    //                       0 Should be replaced by Seq.
+    attrs = prepare_attr(len,0,TYPE_LS);
     m = prepare_msg(attrs,args);
-    send_msg(socket,m);
+    print_message(m);
+    scanf("%d",&i);
+    send_msg(m);
     puts("(req_cd) Waiting for ls response..."); // Wait for an ACK
     i = 0;
-    while((i = wait_response(socket)) == 0)
-        send_msg(socket,m);
+    while((i = wait_response()) == 0)
+        send_msg(m);
     if(i == 1) { // Got an ACK
-        // Server will update the path.
         puts("(req_cd) Got an ack.");
         free(m);
         return 1;
@@ -113,7 +114,7 @@ int req_cd(int socket,char *args) {
     }
 }
 
-Message* wait_data(int socket,Message* m) {
+Message* wait_data(Message* m) {
     unsigned char *buffer;
     time_t seconds = 3;
     time_t endwait;
@@ -127,8 +128,7 @@ Message* wait_data(int socket,Message* m) {
     endwait = time(NULL) + seconds;
 
     while(time(NULL) < endwait && i != 1 && buffer[0] != 126) {
-    //while(time(NULL) < endwait && i != 1) {
-        i = receive(socket, buffer, &m2, STD_TIMEOUT);
+        i = receive(buffer, &m2, STD_TIMEOUT);
     }
     if(i == 1) {
         free(buffer);
@@ -143,39 +143,34 @@ Message* wait_data(int socket,Message* m) {
 }
 
 
-int listen_ls(int socket) {
+int listen_ls() {
     Message *m;
     unsigned char *c;
     int size = 0;
     int i=0;
-    //c = malloc(size); This might be the problem. We changed size to 0. Dont know why, but..
     c = malloc(MAX_DATA_LEN * sizeof(unsigned char) + 1);
     m = malloc_msg(MAX_DATA_LEN);
-    m = wait_data(socket, m);
-    print_message(m);
-    //strcpy(c, ""); // we have to initialize c or the first char will be garbage
-    c[0] = '\0'; // Better way to initialize an empty string.
+    m = wait_data(m);
+    //print_message(m);
+    c[0] = '\0'; // Initializing an empty string.
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
             puts("(listen_ls) Problem receiving message.");
-            send_nack(socket);
+            send_nack();
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
-            printf("recebeu 1 msg\n");
             size += (int) m->attr.len;
             printf("(listen_ls) Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * size);
             strcat(c, m->data);
-            send_ack(socket);
+            send_ack();
         }
         else {
             //puts("(listen_ls) Can not handle this message.");
         }
         free(m); // m will be allocated again in wait_data. - Might bug something.
-        m = wait_data(socket,m);
+        m = wait_data(m);
     }
-    printf("\n========= LS ======== (atualmente com ' de separador)\n");
-    //puts(c);
-    //printf("\n");
+    /*
     for(i=0; i<size; i++) {
         if(c[i] == '\'') {
             printf("   ");
@@ -184,12 +179,13 @@ int listen_ls(int socket) {
             printf("%c",c[i]);
     }
     printf("\n");
+    */
     free(c);
     free(m);
     return 1;
 }
 
-void send_string(int socket) {
+void send_string() {
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
         error("(send_string) Unable to allocate memory.");
@@ -199,7 +195,7 @@ void send_string(int socket) {
     Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
     m = malloc_msg(attrs.len + 5);
     m = prepare_msg(attrs, buffer);
-    send_msg(socket,m);
+    send_msg(m);
     free(buffer);
     free(m);
     return ;
