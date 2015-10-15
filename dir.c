@@ -84,19 +84,6 @@ unsigned char* fix_dir(unsigned char *c, int length) {
     c = to_vector(tmp,n);
     return c;
 }
-/*
-int main() {
-    unsigned char *addr = malloc(sizeof(char) * 1024);
-    int i,n;
-    scanf("%d\n",&n);
-    for(i=0; i<n; i++) {
-        scanf("%s",addr);
-        addr = fix_dir(addr,strlen(addr));
-        printf("Addr: ");
-        puts(addr);
-    }
-}
-*/
 
 int check_cd(unsigned char* c) {
 /* This function will concatenate the path received with the global variable ADDR,
@@ -162,7 +149,7 @@ int get_files(char *path, char *c) {
 }
 
 char* ls(char* path, char* args) { // generic ls
-    //Receives a path and arguments as param and returns a char* with the data requested
+    //Receives a path and arguments as param and returns a char* with the data requested 
     //it has \n separator for every file
     DIR *dir;
     struct dirent *file;

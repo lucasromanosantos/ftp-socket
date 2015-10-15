@@ -1,7 +1,7 @@
 #include "files.c"
 #include "dir.c"
 
-void send_ls_data(int socket,char *args) {
+void send_ls_data(int socket,char *args) { //
     char *result = malloc(1024); // temp size.. realloc maybe??
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {

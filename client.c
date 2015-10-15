@@ -1,6 +1,6 @@
 void send_string(int socket);
 
-void operate_client(int socket) {
+void operate_client(int socket) { //
     FILE *fp;
     int i,length,*comm;
     unsigned char *args,*buf;
