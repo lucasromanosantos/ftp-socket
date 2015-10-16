@@ -28,11 +28,13 @@ void operate_client() { //
                 while(req_cd(args) == 0);
             } else if(*comm == 5) {
                 puts("(operate_client) Sending put request.");
-                fp = open_file();
+                //fp = open_file(); // This function reads a file path from stdin.
+                buf = strcpy(buf,LocalPath);
+                fp = fopen(strcat(buf,args),"w");
                 //length = send_filesize(fp,seq);
                 //if(send_file(fp,length,seq) != 1)
-                length = send_filesize(fp); // Maybe I should change the parameters in the function, not here.
-                if(send_file(fp,length) != 1) // Maybe I should change the parameters in the function, not here.
+                length = send_filesize(fp);
+                if(send_file(fp,length) != 1)
                     puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");

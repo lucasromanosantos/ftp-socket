@@ -112,7 +112,7 @@ int send_filesize(FILE* fp) {
 	return length;
 }
 
-FILE* open_file() {
+FILE* open_file(char *args) {
 	unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
         error("(open_file) Unable to allocate memory.");

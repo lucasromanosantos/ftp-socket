@@ -127,7 +127,7 @@ int check_cd(unsigned char* c) {
 }
 
 char* ls(char* path, char* args) { // generic ls
-    //Receives a path and arguments as param and returns a char* with the data requested 
+    //Receives a path and arguments as param and returns a char* with the data requested
     //it has \n separator for every file
     DIR *dir;
     struct dirent *file;
