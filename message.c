@@ -194,6 +194,6 @@ int send_msg(Message *m) {
     }
     //free(s);
     if(n <= 0)
-        Seq++;
+        Seq = (Seq + 1) % 64;
     return (n <= 0) ? - 1 : 0;
 }

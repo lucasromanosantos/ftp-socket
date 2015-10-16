@@ -11,7 +11,6 @@ void send_ls_data(char *args) { //
     strcpy(result, ls(LocalPath,args));
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
-    int seq = 1;
 
     Message *m;
     m = malloc_msg(MAX_DATA_LEN);
@@ -19,7 +18,7 @@ void send_ls_data(char *args) { //
     while(nob > 0) {
         if(nob >= MAX_DATA_LEN) {
             char tmp[64];
-            attrs = prepare_attr(MAX_DATA_LEN, seq, TYPE_SHOWSCREEN);
+            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
             strncpy(tmp, result, MAX_DATA_LEN);
             m = prepare_msg(attrs, tmp);
             send_msg(m);
@@ -28,7 +27,7 @@ void send_ls_data(char *args) { //
         }
         else {
             char tmp[nob + 1];
-            attrs = prepare_attr(nob, seq, TYPE_SHOWSCREEN);
+            attrs = prepare_attr(nob, Seq, TYPE_SHOWSCREEN);
             m = malloc_msg(attrs.len);
             strncpy(tmp, result, nob);
             m = prepare_msg(attrs, tmp);
@@ -44,9 +43,9 @@ void send_ls_data(char *args) { //
         }
         if(!wait_response())
             break;
-        seq += 1;
+        //Seq = (Seq + 1) % 64; Send_msg increment seq counter
     }
-    printf("(send_ls) Final sequence: %d \n", seq);
+    printf("(send_ls) Final sequence: %d \n", Seq);
 }
 
 void operate_server() {
@@ -85,7 +84,7 @@ void operate_server() {
                         a.len = 0;
                         a.type = TYPE_ERROR;
                         a.seq = Seq;
-                        Seq++;
+                        //Seq = (Seq + 1) % 64; Send_msg increment seq counter
                         m = prepare_msg(a,"");
                         send_msg(m);
                     } else {

@@ -71,17 +71,19 @@ int send_file(FILE *fp,int len) {
 		while(!wait_response) { // If we enter this while we got an nack, so, resend the message.
 			send_msg(m);
 		}
-		(Seq)++;
+		//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	}
+	nob = 0;
 	while(nob < len)
 		nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
 	a = prepare_attr(len,Seq,TYPE_PUT);
+	c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
 	m = prepare_msg(a,c);
 	send_msg(m);
 	while(!wait_response) {
 		send_msg(m);
 	}
-	(Seq)++;
+	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	unsigned char s[0];
 	a = prepare_attr(0,Seq,TYPE_END);
 	m = prepare_msg(a,s);
@@ -89,6 +91,7 @@ int send_file(FILE *fp,int len) {
 	while(!wait_response) {
 		send_msg(m);
 	}
+	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	free(c);
 	free(m);
 	return 1;
@@ -107,7 +110,7 @@ int send_filesize(FILE* fp) {
 	while(!wait_response) {
 		send_msg(m);
 	}
-	(Seq)++;
+	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	free(m);
 	return length;
 }
