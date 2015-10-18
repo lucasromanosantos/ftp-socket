@@ -9,7 +9,6 @@ int main(int argc, char *argv[]) {
         printf("Error: Invalid number of arguments.\nYou should inform if its a client or a server.\n");
         exit(-1);
     }
-    int Socket;
     Socket = ConexaoRawSocket(DEVICE);
     if(Socket < 0)
         error("Error opening socket.");

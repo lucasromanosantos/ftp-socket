@@ -170,16 +170,7 @@ int listen_ls() {
         free(m); // m will be allocated again in wait_data. - Might bug something.
         m = wait_data(m);
     }
-    /*
-    for(i=0; i<size; i++) {
-        if(c[i] == '\'') {
-            printf("   ");
-        }
-        else
-            printf("%c",c[i]);
-    }
-    printf("\n");
-    */
+    print_ls(c);
     free(c);
     free(m);
     return 1;

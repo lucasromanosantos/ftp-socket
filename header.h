@@ -63,4 +63,4 @@ typedef struct Message {
 } Message;
 
 char *User,*LocalPath,*RemPath;
-int IsClient,Seq,Socket;
+int IsClient, Seq, Socket;

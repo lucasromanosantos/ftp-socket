@@ -112,7 +112,7 @@ int msg_length(Message *m) {
 char* msg_to_str(Message *m) {
     int i,pos;
     unsigned char *c;
-    if((c = malloc(msg_length(m))) == NULL)
+    if((c = malloc(msg_length(m))) == NULL) // put +1 for \0
         error("(msg_to_str) Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
     //else
     //    puts("Memory allocated succesfully.");

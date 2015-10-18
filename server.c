@@ -1,7 +1,7 @@
 #include "files.c"
 #include "dir.c"
 
-void send_ls_data(char *args) { //
+void send_ls(char *args) { //
     char *result = malloc(1024);
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
@@ -27,13 +27,12 @@ void send_ls_data(char *args) { //
         }
         else {
             char tmp[nob + 1];
-            attrs = prepare_attr(nob, Seq, TYPE_SHOWSCREEN);
+            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             m = malloc_msg(attrs.len);
             strncpy(tmp, result, nob);
             m = prepare_msg(attrs, tmp);
             send_msg(m);
             nob = 0;
-
             if(wait_response()) {
                 attrs = prepare_attr(0, 0, TYPE_END);
                 m = malloc_msg(0);
@@ -73,7 +72,7 @@ void operate_server() {
                     send_ack();
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     printf("data dentro da mensagem: %s \n", m->data);
-                    send_ls_data(m->data);
+                    send_ls(m->data);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
                     send_ack();

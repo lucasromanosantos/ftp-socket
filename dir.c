@@ -252,6 +252,7 @@ char* ls(char* path, char* args) { // generic ls
                 strcat(res,this);
             }
         }
+        printf("Complete. Sending result... \n");
     }
 
     else {
