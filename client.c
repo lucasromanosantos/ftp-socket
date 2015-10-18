@@ -148,9 +148,10 @@ int listen_ls() {
     int size = 0;
     int i=0;
     c = malloc(MAX_DATA_LEN * sizeof(unsigned char) + 1);
+    //c = malloc(10000);
     m = malloc_msg(MAX_DATA_LEN);
     m = wait_data(m);
-    //print_message(m);
+    print_message(m);
     c[0] = '\0'; // Initializing an empty string.
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
@@ -159,8 +160,8 @@ int listen_ls() {
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
             size += (int) m->attr.len;
             printf("(listen_ls) Size of message type showscreen: %d \n", size);
-            c = realloc(c,sizeof(char) * size);
-            strcat(c, m->data);
+            c = realloc(c,sizeof(char) * (size + 1));
+            strncat(c, m->data, m->attr.len);
             send_ack();
         }
         else {
@@ -168,6 +169,7 @@ int listen_ls() {
         }
         free(m); // m will be allocated again in wait_data. - Might bug something.
         m = wait_data(m);
+        print_message(m);
     }
     send_ack(); // Sending an ack to TYPE_END message.
     print_ls(c);
