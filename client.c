@@ -86,10 +86,8 @@ int req_cd(char *args) {
         return -1;
     }
     m = malloc_msg(len+1); // Data is empty
-    attrs = prepare_attr(len,Seq,TYPE_LS);
+    attrs = prepare_attr(len,Seq,TYPE_CD);
     m = prepare_msg(attrs,args);
-    print_message(m);
-    scanf("%d",&i);
     send_msg(m);
     puts("(req_cd) Waiting for ls response..."); // Wait for an ACK
     i = 0;
@@ -171,6 +169,7 @@ int listen_ls() {
         free(m); // m will be allocated again in wait_data. - Might bug something.
         m = wait_data(m);
     }
+    send_ack(); // Sending an ack to TYPE_END message.
     print_ls(c);
     free(c);
     free(m);
