@@ -62,7 +62,6 @@ void operate_server() {
 
     while(1) {
         res = receive(buffer2, &m, STD_TIMEOUT);
-        puts("Waiting...");
         if(res == 1) {
             par = get_parity(m);
             if((int)par != (int)m->par) {
