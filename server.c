@@ -62,6 +62,7 @@ void operate_server() {
 
     while(1) {
         res = receive(buffer2, &m, STD_TIMEOUT);
+        puts("Waiting...");
         if(res == 1) {
             par = get_parity(m);
             if((int)par != (int)m->par) {
@@ -70,6 +71,9 @@ void operate_server() {
             } else {
                 if (m->attr.type == TYPE_LS) { // client requested LS
                     send_ack();
+                    if(m->attr.len == 0) {
+                        m->data[0] = '\0';
+                    }
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     printf("data dentro da mensagem: %s \n", m->data);
                     send_ls(m->data);
@@ -88,8 +92,9 @@ void operate_server() {
                         send_msg(m);
                     } else {
                         puts("\t(operate_server) Path updated succesfully.");
+                        send_ack();
                     }
-                } else if (m->attr.type == TYPE_PUT) { // client request LS
+                } else if (m->attr.type == TYPE_PUT) { // client request PUT
                     send_ack();
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
                     strcpy(addr,LocalPath); // Concatenating file name.
@@ -101,7 +106,7 @@ void operate_server() {
                     }
                     receive_file(fp);
                     puts("I should have received a file. Please, check it.");
-                } else if (m->attr.type == TYPE_GET) { // client request LS
+                } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_ack();
                     puts("\t(operate_server) Ready to receive a Get. Ack sent.");
                 }

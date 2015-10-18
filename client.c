@@ -132,6 +132,7 @@ Message* wait_data(Message* m) {
     }
     if(i == 1) {
         free(buffer);
+        Seq = (Seq + 1) % 64;
         return m2;
     }
     else {

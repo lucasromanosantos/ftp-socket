@@ -63,16 +63,19 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
             puts("(wait_response) Got an ack! \n");
+            Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 1;
         } else if(m->attr.type == TYPE_NACK) {
             puts("(wait_response) Got a nack! \n");
+            Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 0;
         } else if(m->attr.type == TYPE_ERROR) {
             puts("(wait_response) Got an error! \n");
+            Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return -1;
