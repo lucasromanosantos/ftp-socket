@@ -24,8 +24,11 @@ void send_ls(char *args) { //
             send_msg(m);
             result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
             nob -= MAX_DATA_LEN;
-        }
-        else {
+            if(!wait_response()) {
+                send_type(TYPE_ERROR);
+                break;
+            }
+        } else {
             char tmp[nob + 1];
             attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             m = malloc_msg(attrs.len);
@@ -34,17 +37,17 @@ void send_ls(char *args) { //
             send_msg(m);
             nob = 0;
             if(wait_response()) {
-                attrs = prepare_attr(0, 0, TYPE_END);
-                m = malloc_msg(0);
-                m = prepare_msg(attrs, "");
-                send_msg(m);
+                send_type(TYPE_END);
+            } else {
+                send_type(TYPE_ERROR);
             }
         }
-        if(!wait_response())
-            break;
-        //Seq = (Seq + 1) % 64; Send_msg increment seq counter
     }
-    printf("(send_ls) Final sequence: %d \n", Seq);
+    if(wait_response()) {
+        puts("Ls completed succesfully. Returning..."); // We should delete this message after LS work properly.
+    } else {
+        send_type(TYPE_ERROR);
+    }
 }
 
 void operate_server() {
@@ -65,11 +68,11 @@ void operate_server() {
         if(res == 1) {
             par = get_parity(m);
             if((int)par != (int)m->par) {
-                send_nack();
+                send_type(TYPE_NACK);
                 printf("\t(operate_server) Nack sent.");
             } else {
                 if (m->attr.type == TYPE_LS) { // client requested LS
-                    send_ack();
+                    send_type(TYPE_ACK);
                     if(m->attr.len == 0) {
                         m->data[0] = '\0';
                     }
@@ -78,23 +81,16 @@ void operate_server() {
                     send_ls(m->data);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
-                    send_ack();
                     puts("\t(operate_server) Received Cd. Ack sent.");
                     if(!check_cd(m->data)) {
                         puts("\t(operate_server) Cd path was wrong. Error occured.");
-                        Attr a;
-                        a.len = 0;
-                        a.type = TYPE_ERROR;
-                        a.seq = Seq;
-                        //Seq = (Seq + 1) % 64; Send_msg increment seq counter
-                        m = prepare_msg(a,"");
-                        send_msg(m);
+                        send_type(TYPE_ERROR);
                     } else {
                         puts("\t(operate_server) Path updated succesfully.");
-                        send_ack();
+                        send_type(TYPE_ACK);
                     }
                 } else if (m->attr.type == TYPE_PUT) { // client request PUT
-                    send_ack();
+                    send_type(TYPE_ACK);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
                     strcpy(addr,LocalPath); // Concatenating file name.
                     strcat(addr,m->data); // Concatenating file name.
@@ -106,11 +102,11 @@ void operate_server() {
                     receive_file(fp);
                     puts("I should have received a file. Please, check it.");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
-                    send_ack();
+                    send_type(TYPE_ACK);
                     puts("\t(operate_server) Ready to receive a Get. Ack sent.");
                 }
-                send_ack();
-                puts("\t(operate_server) Ack sent.");
+                //send_type(TYPE_ACK);
+                //puts("\t(operate_server) Ack sent.");
             }
         }
     }

@@ -156,12 +156,12 @@ void receive_file(FILE *fp) {
 		par = get_parity(m);
 		if((int)par != (int)m->par) {
 			puts("(receive_file) Parity error or message.");
-			send_nack();
+			send_type(TYPE_NACK);
 		} else {
 			for(j=0; j<m->attr.len;) // Write data received in file.
 				j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
 			i += m->attr.len;
-			send_ack();
+			send_type(TYPE_ACK);
 		}
 	}
 	// Read all messages, created and updated the file, I should receive a TYPE_END.

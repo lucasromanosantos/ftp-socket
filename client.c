@@ -141,7 +141,6 @@ Message* wait_data(Message* m) {
     }
 }
 
-
 int listen_ls() {
     Message *m;
     unsigned char *c;
@@ -156,13 +155,13 @@ int listen_ls() {
     while (m->attr.type != TYPE_END) {
         if(m->attr.type == TYPE_ERROR) {
             puts("(listen_ls) Problem receiving message.");
-            send_nack();
+            send_type(TYPE_NACK);
         } else if (m->attr.type == TYPE_SHOWSCREEN) {
             size += (int) m->attr.len;
             printf("(listen_ls) Size of message type showscreen: %d \n", size);
             c = realloc(c,sizeof(char) * (size + 1));
             strncat(c, m->data, m->attr.len);
-            send_ack();
+            send_type(TYPE_ACK);
         }
         else {
             //puts("(listen_ls) Can not handle this message.");
@@ -171,7 +170,7 @@ int listen_ls() {
         m = wait_data(m);
         print_message(m);
     }
-    send_ack(); // Sending an ack to TYPE_END message.
+    send_type(TYPE_ACK); // Sending an ack to TYPE_END message.
     print_ls(c);
     free(c);
     free(m);

@@ -8,6 +8,8 @@ Message* str_to_msg(char* c);
 Message* prepare_msg(Attr attr, unsigned char *data);
 void send_ack();
 void send_nack();
+void send_error();
+void send_type(int type);
 int send_msg(Message *m);
 int receive(unsigned char *data, Message **m, int timeout);
 int wait_response();
@@ -139,6 +141,7 @@ Message* str_to_msg(char* c) {
     if((m->data = malloc(m->attr.len)) == NULL)
         error("(str_to_msg) Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
+    m->data[m->attr.len] = '\0';
     m->par = c[strlen2(c)-1];
     return m;
 }
@@ -157,21 +160,14 @@ Message* prepare_msg(Attr attr, unsigned char *data) {
     return m;
 }
 
-void send_ack() {
+void send_type(int type) {
+/* Send an empty message with attr->type set to our parameter.
+ * We can use it to send acks, nacks, error and end messages.
+ */
     Message *m;
     m = malloc_msg(0); // No data in this message, so, its length is 0.
-    Attr attr = prepare_attr(0,0,TYPE_ACK);
+    Attr attr = prepare_attr(0,0,type);
     m = prepare_msg(attr,"0");
-    send_msg(m);
-    free(m);
-    return ;
-}
-
-void send_nack() {
-    Message *m;
-    m = malloc_msg(0); // No data in this message, so, its length is 0.
-    Attr attr = prepare_attr(0,0,TYPE_NACK);
-    m = prepare_msg(attr,"");
     send_msg(m);
     free(m);
     return ;
