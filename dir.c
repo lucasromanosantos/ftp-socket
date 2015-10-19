@@ -118,7 +118,7 @@ int check_cd(unsigned char* c) {
     }
     // If we got here, the path is correct. So, we should update ADDR.
     strcpy(LocalPath,tmp);
-    printf("Final path (after CD): '%s'",LocalPath);
+    //printf("Final path (after CD): '%s'",LocalPath);
     closedir(dir);
     free(tmp);
     return 1;

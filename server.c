@@ -77,7 +77,7 @@ void operate_server() {
                         m->data[0] = '\0';
                     }
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
-                    printf("data dentro da mensagem: %s \n", m->data);
+                    //printf("data dentro da mensagem: %s \n", m->data);
                     send_ls(m->data);
                     puts("\t(operate_server) Ls sent.");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
