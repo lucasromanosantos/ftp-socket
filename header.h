@@ -5,7 +5,12 @@
 #include <math.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
+#include <pwd.h> // To get username
+#include <grp.h> // To get group name
+#include <errno.h> // To use errno
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,6 +23,7 @@
 #define DEVICE "eth0"
 #define BUF_SIZE 64
 #define MAX_LEN 68
+#define MAX_DATA_LEN 63
 #define MIN_LEN 5 //wrong? check later
 #define MAX_MSG_LEN 500 // Wrong, check it later.
 #define STD_TIMEOUT 3000
@@ -40,6 +46,9 @@
 #define TYPE_ERROR 14
 #define TYPE_END 15
 
+#define FILE_LEN 256
+#define NUM_FILE 32
+
 typedef struct Attr {
 	unsigned short len : 6,
      	  		   seq : 6,
@@ -52,3 +61,6 @@ typedef struct Message {
     unsigned char *data;
     unsigned char par : 8;
 } Message;
+
+char *User,*LocalPath,*RemPath;
+int IsClient, Seq, Socket;

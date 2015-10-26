@@ -1,30 +1,17 @@
 #include <math.h>
 
-int print_message(Message *m) {
-    printf("\tMsg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n", m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
-    return 1;
-}
+void flush_buf();
+int pot(int base, int exp);
+unsigned char get_parity(Message *m);
+void error(const char *msg);
+size_t strlen2(const char *p);
+Attr prepare_attr(int length,int seq,int type);
 
-int get_files(char *path, char *c) {
-	DIR *dp;
-	struct dirent *ep;
-	dp = opendir(path);
-	if(dp != NULL) {
-		c = strcpy(c, ""); // starting the buffer with something to use strcat. Maybe not the best way
-		while(ep = readdir(dp)) {
-            strcat(c, ep->d_name);
-            strcat(c, "\'");
-		}
-		(void) closedir(dp);
-		return 1;
-	}
-	else {
-		puts("Error! Could not open the directory");
-		return 0;
-	}
+void flush_buf() { // Removes a remaining \n from stdin (in case we do a scanf("%d"))
+    char c;
+    while((c = getchar()) != '\n');
+    return ;
 }
-
-//
 
 int pot(int base, int exp) {
     if(exp < 0)
@@ -36,30 +23,11 @@ int pot(int base, int exp) {
     return base * pot(base, exp-1);
 }
 
-/* Expected Parity:
-Init does not count.
-Length, sequency and type: (Using values 1, 1 and 9)
-0000 0100 - len + 2 bits seq
-0001 1001 - 4 bits seq + type
-0010 1001 // Character (in ASCII) from the message
----------
-0011 0100
-
-What I am doing with my function:
-  0000 01
-  0000 01
-     1001
-0010 1001
----------
-0010 0001
-*/
-
 unsigned char get_parity(Message *m) {
     int i;
     unsigned char res = 0,c[2];
     memcpy(c,&m->attr,2); // c will have m->attr data so we can look to this struct as 2 chars.
     res = c[0] ^ c[1];
-    //print_message(m);
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
@@ -72,58 +40,10 @@ void error(const char *msg) {
     exit(1);
 }
 
-Message* create_msg(int length) {
-    Message *m;
-    if((m = malloc(1 + 2 + length + 1 + 1)) == NULL)
-        error("Unable to allocate memory.");
-    return m;
-}
-
-int msg_length(Message *m) {
-    // init | attr | data | par | '\0'
-    return   1 +  2 + strlen(m->data) + 1 + 1;
-}
-
-char* msg_to_str(Message *m) {
-    int i,pos;
-    unsigned char *c;
-    if((c = malloc(msg_length(m))) == NULL)
-        error("Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
-    c[0] = m->init;
-    memcpy(c+1,&m->attr,2);
-    memcpy(c+3,m->data,m->attr.len);
-    c[m->attr.len + 3] = m->par;
-    c[m->attr.len + 4] = '\0';
-    return c;
-}
-
-Message* str_to_msg(char* c) {
-    Message *m;
-    m = create_msg(strlen(c)-5); // Strlen is wrong used here. We have to get msg->attr.len from the string c to allocate the right memory.
-    // Ok, maybe strlen is not thaaat wrong. In fact, its probably correct. Someone should revise it.
-    m->init = c[0];
-    memcpy(&m->attr, c+1, 2);
-    if((m->data = malloc(m->attr.len)) == NULL)
-        error("Unable to allocate memory.");
-    m->data = memcpy(m->data, c + 3, m->attr.len);
-    m->par = c[strlen(c)-1];
-    return m;
-}
-
-Message prepare_msg(Attr attr, unsigned char *data) {
-    Message *m;
-    m = create_msg(attr.len);
-    printf("\tCriando mensagem... \n");
-    m->init = 0x7E; // 0111 1110
-    m->attr.len = attr.len;
-    m->attr.seq = attr.seq;
-    m->attr.type = attr.type;
-    if((m->data = malloc(sizeof(char) * (attr.len + 1))) == NULL)
-        error("Unable to allocate memory.");
-    strcpy(m->data, data);  // This was throwing an unknown error. Any ideas why?
-    //m->par = 0;
-    m->par = get_parity(m);
-    return *m;
+size_t strlen2(const char *p) {
+    size_t result = 2; // Two first bytes of nack are 0000 0000
+    while(p[result] != '\0') ++result;
+    return result;
 }
 
 Attr prepare_attr(int length,int seq,int type) {
@@ -134,13 +54,98 @@ Attr prepare_attr(int length,int seq,int type) {
     return a;
 }
 
-int load_interface() {
-    int i;
-    printf("Escolha o que voce deseja fazer:\n");
-    printf("\t1- Ls remoto,\n");
-    printf("\t2- Cd remoto,\n");
-    printf("\t3- Enviar arquivo,\n");
-    printf("\t4- Puxar arquivo.\n");
-    scanf(%d, &i); 
-    return d;
+unsigned char* show_interface(int *comm,char *arg,char *buffer) {
+    // Watch out! *comm has to come already allocated.
+    char com[6]; // Command
+    int i = 0,len = strlen(buffer);
+
+    if(IsClient)
+        printf("%s@client:%s$ ",User,LocalPath);
+    else
+        printf("%s@server:%s$ ",User,LocalPath);
+
+    for(i=0; i<len; i++) {
+        buffer[i] = '\0';
+    }
+
+    fgets(buffer,1024,stdin);
+    buffer[strlen(buffer) - 1] = '\0';
+    printf("Buffer: ");
+    puts(buffer);
+
+    len = strlen(arg);
+    for(i=0; i<len; i++)
+        arg[i] = '\0';
+    i=0;
+
+    while(i < 5 && buffer[i] != ' ' && buffer[i] != '\0') {
+        com[i] = buffer[i];
+        i++;
+    }
+    com[i] = '\0';
+
+    if(strcmp(com, "ls") == 0) {
+        *comm = 1;
+    } else if(strcmp(com, "cd") == 0) {
+        *comm = 2;
+    } else if(strcmp(com, "rls") == 0) {
+        *comm = 3;
+    } else if(strcmp(com, "rcd") == 0) {
+        *comm = 4;
+    } else if(strcmp(com, "put") == 0) {
+        *comm = 5;
+    } else if(strcmp(com, "get") == 0) {
+        *comm = 6;
+    } else if(strcmp(com, "exit") == 0) {
+        exit(0);
+    } else if(strcmp(com, "clear") == 0) {
+        system("clear");
+        *comm = 7;
+        return "";
+    } else if(strcmp(com, "help") == 0) {
+        *comm = 0;
+        puts("Available commands:");
+        puts("\tclear");
+        puts("\tls (options: -l, -a, -la)");
+        puts("\tcd <path>");
+        puts("\trls (options: -l, -a, -la)");
+        puts("\trcd <path>");
+        puts("\tput <path>");
+        puts("\tget <path>");
+        puts("\texit");
+        return "";
+    } else {
+        *comm = 0;
+        printf("%s",com);
+        puts(": command not found.");
+        return "";
+    }
+
+    if((*comm == 1 && buffer[2] != '\0') || (*comm == 3 && buffer[3] != '\0')) {
+        // We got an LS. And it has some parameters! Time to check them.
+        int rls = (*comm == 3) ? 1 : 0; // If it is an rls, it has 1 more char, so, it will change, like, everything.
+        for(i = 4 + rls; buffer[i] != '\0'; i++) { // We initialize i as 4 because we want to ignore the '-' (ls -la, or ls -l).
+            if(i == 7 + rls) { // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
+                *comm = 0;
+                puts("Ls can't have more than 2 arguments.");
+                return "";
+            }
+            arg[i-4-rls] = buffer[i];
+        }
+        if((strcmp(arg,"l") != 0) && (strcmp(arg,"a") != 0) && (strcmp(arg,"la") != 0) && (strcmp(arg,"al") != 0)) {
+            *comm = 0;
+            puts("Invalid option. Try 'help'.");
+            return "";
+        }
+        return arg;
+    } else if (buffer[2] != '\0') {
+        // Cd, put and get have a path as parameter. Time to read it!
+        int x = (*comm == 2) ? 3 : 4;
+        // This inline if is to dont read a space in put and get (they have 1 more digit than cd).
+        for(i=x; buffer[i] != '\0'; i++)
+            arg[i-x] = buffer[i];
+        return arg;
+    }
+
+    return arg;
 }
