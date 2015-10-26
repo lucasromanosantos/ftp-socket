@@ -111,7 +111,8 @@ Message* malloc_msg(int length) {
 
 int msg_length(Message *m) {
     // init | attr | data | par | '\0'
-    return   1 +  2 + strlen(m->data) + 1 + 1;
+    //return   1 +  2 + strlen(m->data) + 1 + 1; // I changed this 26/10. It might bug something.
+    return 1 + 2 + m->attr.len + 1 + 1;
 }
 
 char* msg_to_str(Message *m) {
@@ -178,7 +179,7 @@ int send_msg(Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    printf("\t(send_msg) Enviando: ");
+    printf("\t(send_msg) Enviando (%d bytes): ",length);
     print_message(m);
     // Actually send the message.
     while(length > 0) {
