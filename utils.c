@@ -49,7 +49,8 @@ size_t strlen2(const char *p) {
 Attr prepare_attr(int length,int seq,int type) {
     Attr a;
     a.len = length;
-    a.seq = seq;
+    //a.seq = seq;
+    a.seq = 0;
     a.type = type;
     return a;
 }
