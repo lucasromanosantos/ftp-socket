@@ -101,11 +101,11 @@ int send_filesize(FILE* fp) {
 	unsigned int length = get_file_size(fp);
 	Message *m;
 	Attr a;
-	m = malloc_msg(sizeof(unsigned int));
 	a = prepare_attr(sizeof(unsigned int),Seq,TYPE_FILESIZE);
-	unsigned char s[5];
+	unsigned char *s = malloc(5 * sizeof(unsigned char));
 	s[4] = '\0';
-	memcpy(s,&length,sizeof(unsigned int));
+	s = memcpy(s,&length,sizeof(unsigned int));
+	puts(s);
 	m = prepare_msg(a,s);
 	send_msg(m);
 	while(!wait_response) {

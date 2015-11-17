@@ -28,14 +28,12 @@ void operate_client() { //
                 while(req_cd(args) == 0);
             } else if(*comm == 5) {
                 puts("(operate_client) Sending put request.");
-                //fp = open_file(); // This function reads a file path from stdin.
                 buf = strcpy(buf,LocalPath);
-                fp = fopen(strcat(buf,args),"w");
-                //length = send_filesize(fp,seq);
-                //if(send_file(fp,length,seq) != 1)
+                fp = fopen(strcat(buf,args),"r");
+                while(req_put(args) == 0);
                 length = send_filesize(fp);
-                if(send_file(fp,length) != 1)
-                    puts("(operate_client) Could not send file.");
+                //if(send_file(fp,length) != 1)
+                //    puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");
                 //open_file();
@@ -111,6 +109,39 @@ int req_cd(char *args) {
         exit(1);
     }
 }
+
+int req_put(char *args) {
+    Message *m;
+    Attr attrs;
+    int i,len = strlen(args);
+    if(len > 63) {
+        puts("Path too long. Try again with 63 or less bytes.");
+        return -1;
+    }
+    m = malloc_msg(0); // Data is empty
+    printf("(req_put) argumentos: %s\n", args);
+    attrs = prepare_attr(strlen(args),Seq,TYPE_PUT);
+    m = prepare_msg(attrs,args);
+    send_msg(m);
+    puts("(req_put) Waiting for put response..."); // Wait for an ACK
+    while(!(i = wait_response()))
+        send_msg(m);
+    if(i == 1) { // Got an ACK
+        // Server will start sending the data.
+        puts("(req_put) Got an ack.");
+        free(m);
+        return 1;
+    } else if(i == 0) { // Got an NACK
+        puts("(req_put) Got a nack.");
+        free(m);
+        return 0;
+    } else { // Panic!
+        puts("(req_put) Panic!!");
+        free(m);
+        exit(1);
+    }
+}
+
 
 Message* wait_data(Message* m) {
     unsigned char *buffer;
