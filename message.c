@@ -156,7 +156,8 @@ Message* prepare_msg(Attr attr, unsigned char *data) {
     m->attr.type = attr.type;
     if((m->data = malloc(sizeof(char) * (attr.len))) == NULL)
         error("(prepare_msg) Unable to allocate memory.");
-    strcpy(m->data, data);
+    //strcpy(m->data, data);
+    memcpy(m->data,data,(int)attr.len);
     m->par = get_parity(m);
     return m;
 }

@@ -32,6 +32,7 @@ void operate_client() { //
                 fp = fopen(strcat(buf,args),"r");
                 while(req_put(args) == 0);
                 length = send_filesize(fp);
+                send_file(fp,length);
                 //if(send_file(fp,length) != 1)
                 //    puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
@@ -207,7 +208,7 @@ int listen_ls() {
     free(m);
     return 1;
 }
-
+/*
 void send_string() {
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
@@ -223,3 +224,4 @@ void send_string() {
     free(m);
     return ;
 }
+*/

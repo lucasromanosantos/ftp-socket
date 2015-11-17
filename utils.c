@@ -31,6 +31,7 @@ unsigned char get_parity(Message *m) {
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
+    printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
     return res;
 }
 
@@ -49,7 +50,8 @@ size_t strlen2(const char *p) {
 Attr prepare_attr(int length,int seq,int type) {
     Attr a;
     a.len = length;
-    a.seq = seq;
+    //a.seq = seq;
+    a.seq = 0;
     a.type = type;
     return a;
 }

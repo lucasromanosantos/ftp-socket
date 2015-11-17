@@ -104,14 +104,15 @@ int send_filesize(FILE* fp) {
 	a = prepare_attr(sizeof(unsigned int),Seq,TYPE_FILESIZE);
 	unsigned char *s = malloc(5 * sizeof(unsigned char));
 	s[4] = '\0';
-	s = memcpy(s,&length,sizeof(unsigned int));
-	puts(s);
+	printf("The length is going to be %u",length);
+	//s = memcpy(s,&length,4);
+	memcpy(s,&length,4);
 	m = prepare_msg(a,s);
 	send_msg(m);
 	while(!wait_response) {
 		send_msg(m);
 	}
-	//memcpy(&length,m->data,4); // Deletar depois!
+	memcpy(&length,m->data,4); // Deletar depois!
 	printf("M%densagem enviada com sucesso. Tam = %d\n",sizeof(unsigned int),length);
 	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	free(m);
