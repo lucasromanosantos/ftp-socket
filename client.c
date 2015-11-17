@@ -3,10 +3,15 @@ void send_string();
 void operate_client() { //
     FILE *fp;
     int i,length,*comm;
-    unsigned char *args,*buf;
-    comm = malloc(sizeof(int));
-    buf = malloc(sizeof(unsigned char) * 1024);
-    args = malloc(sizeof(unsigned char) * 1024);
+    unsigned char *args,*buf,*addr;
+    if((comm = malloc(sizeof(int))) == NULL)
+        error("(operate_client) Error allocating memory.");
+    if((buf = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(operate_client) Error allocating memory.");
+    if((args = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(operate_client) Error allocating memory.");
+    if((addr = malloc(sizeof(unsigned char) * 1024)) == NULL)
+        error("(operate_client) Error allocating memory.");
 
     while(1) {
         *comm = 0;
@@ -37,8 +42,17 @@ void operate_client() { //
                 //    puts("(operate_client) Could not send file.");
             } else if(*comm == 6) {
                 puts("(operate_client) Sending get request.");
-                //open_file();
-                send_string();
+                while(req_get(args) == 0);
+                strcpy(addr,LocalPath); // Concatenating file name.
+                strcat(addr,m->data);   // Concatenating file name.
+                FILE *fp;
+                if((fp = fopen(addr,"w")) == NULL) {
+                    puts("(operate_server) Could not create a new file.");
+                    exit(1);
+                }
+                receive_file(fp);
+                fclose(fp);
+                puts("(operate_client) Get was succesfull!");
             } else {
                 if(*comm != 7)
                     puts("(operate_client) Invalid option. Please, type another number.");
@@ -119,7 +133,7 @@ int req_put(char *args) {
         puts("Path too long. Try again with 63 or less bytes.");
         return -1;
     }
-    m = malloc_msg(0); // Data is empty
+    m = malloc_msg(len); // Data is empty
     printf("(req_put) argumentos: %s\n", args);
     attrs = prepare_attr(strlen(args),Seq,TYPE_PUT);
     m = prepare_msg(attrs,args);
@@ -138,6 +152,37 @@ int req_put(char *args) {
         return 0;
     } else { // Panic!
         puts("(req_put) Panic!!");
+        free(m);
+        exit(1);
+    }
+}
+
+int req_put(char *args) {
+    Message *m;
+    Attr attrs;
+    int i,len = strlen(args);
+    if(len > 63) {
+        puts("Path too long. Try again with 63 or less bytes.");
+        return -1;
+    }
+    m = malloc_msg(len);
+    printf("(req_get) argumentos: %s\n", args);
+    attrs = prepare_attr(strlen(args),Seq,TYPE_GET);
+    m = prepare_msg(attrs,args);
+    send_msg(m);
+    puts("(req_get) Waiting for get response..."); // Wait for an ACK
+    while(!(i = wait_response()))
+        send_msg(m);
+    if(i == 1) { // Got an ACK - Server will send file_size
+        puts("(req_get) Got an ack.");
+        free(m);
+        return 1;
+    } else if(i == 0) { // Got an NACK
+        puts("(req_get) Got a nack.");
+        free(m);
+        return 0;
+    } else { // Panic!
+        puts("(req_get) Panic!!");
         free(m);
         exit(1);
     }

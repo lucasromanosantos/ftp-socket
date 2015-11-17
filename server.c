@@ -93,20 +93,25 @@ void operate_server() {
                     send_type(TYPE_ACK);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
                     strcpy(addr,LocalPath); // Concatenating file name.
-                    strcat(addr,m->data); // Concatenating file name.
+                    strcat(addr,m->data);   // Concatenating file name.
                     FILE *fp;
                     if((fp = fopen(addr,"w")) == NULL) {
                         puts("Could not create a new file.");
                         exit(1);
                     }
                     receive_file(fp);
+                    fclose(fp);
                     puts("I should have received a file. Please, check it.");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
+                    buf = strcpy(buf,LocalPath);
+                    fp = fopen(strcat(buf,args),"r");
+                    length = send_filesize(fp);
+                    send_file(fp,length);
+                    //if(send_file(fp,length) != 1)
+                    //    puts("(operate_client) Could not send file.");
                     puts("\t(operate_server) Ready to receive a Get. Ack sent.");
                 }
-                //send_type(TYPE_ACK);
-                //puts("\t(operate_server) Ack sent.");
             }
         }
     }
