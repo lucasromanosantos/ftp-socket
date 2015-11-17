@@ -43,6 +43,8 @@ int receive(unsigned char *data, Message **m, int timeout) {
             memcpy(&a,data+1,2);
             int i;
             *m = str_to_msg(data);
+            printf("(receive)Got this message(%d):",a.len);
+            print_message(*m);
             return 1; // Success
         }
     }
@@ -143,7 +145,7 @@ Message* str_to_msg(char* c) {
         error("(str_to_msg) Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
     m->data[m->attr.len] = '\0';
-    m->par = c[strlen2(c)-1];
+    m->par = c[3 + (int)m->attr.len];
     return m;
 }
 

@@ -148,19 +148,15 @@ void receive_file(FILE *fp) {
 
     res = receive(buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
-	printf("Got this message:");
-	print_message(m);
 	if(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
 		// This should be a while, sending nack and waiting for the right message.
 		puts("(receive_file) Parity error or message wasnt the file size.");
 		send_type(TYPE_NACK);
 		return ;
 	}
-	int size,i=0,j;
+	unsigned int size,i=0,j;
 	memcpy(&size,m->data,4);
-	printf("Got msg of size = %d\n",size);
 	send_type(TYPE_ACK);
-	return ;
 	while(i < size) {
 	    res = receive(buf, &m, STD_TIMEOUT);
 		par = get_parity(m);
