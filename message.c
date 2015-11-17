@@ -182,7 +182,7 @@ int send_msg(Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    printf("\t(send_msg) Enviando (%d bytes): ",length);
+    printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
     print_message(m);
     // Actually send the message.
     while(length > 0) {

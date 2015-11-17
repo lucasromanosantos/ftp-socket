@@ -52,8 +52,9 @@ void send_ls(char *args) { //
 
 void operate_server() {
     unsigned char *buffer,*buffer2,*addr,par;
-    int res = 0;
+    int res = 0, length;
     Message *m;
+    FILE *fp;
 
     if((buffer2 = malloc(MIN_LEN)) == NULL)
         error("(operate_server) Error allocating memory.");
@@ -94,7 +95,6 @@ void operate_server() {
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
                     strcpy(addr,LocalPath); // Concatenating file name.
                     strcat(addr,m->data);   // Concatenating file name.
-                    FILE *fp;
                     if((fp = fopen(addr,"w")) == NULL) {
                         puts("Could not create a new file.");
                         exit(1);
@@ -104,8 +104,9 @@ void operate_server() {
                     puts("I should have received a file. Please, check it.");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
-                    buf = strcpy(buf,LocalPath);
-                    fp = fopen(strcat(buf,args),"r");
+                    addr = strcpy(addr,LocalPath);
+                    strcat(addr,m->data);
+                    fp = fopen(addr,"r");
                     length = send_filesize(fp);
                     send_file(fp,length);
                     //if(send_file(fp,length) != 1)

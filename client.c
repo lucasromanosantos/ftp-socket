@@ -4,6 +4,7 @@ void operate_client() { //
     FILE *fp;
     int i,length,*comm;
     unsigned char *args,*buf,*addr;
+
     if((comm = malloc(sizeof(int))) == NULL)
         error("(operate_client) Error allocating memory.");
     if((buf = malloc(sizeof(unsigned char) * 1024)) == NULL)
@@ -44,8 +45,7 @@ void operate_client() { //
                 puts("(operate_client) Sending get request.");
                 while(req_get(args) == 0);
                 strcpy(addr,LocalPath); // Concatenating file name.
-                strcat(addr,m->data);   // Concatenating file name.
-                FILE *fp;
+                strcat(addr,args);   // Concatenating file name.
                 if((fp = fopen(addr,"w")) == NULL) {
                     puts("(operate_server) Could not create a new file.");
                     exit(1);
@@ -157,7 +157,7 @@ int req_put(char *args) {
     }
 }
 
-int req_put(char *args) {
+int req_get(char *args) {
     Message *m;
     Attr attrs;
     int i,len = strlen(args);

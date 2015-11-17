@@ -113,7 +113,7 @@ int send_filesize(FILE* fp) {
 		send_msg(m);
 	}
 	memcpy(&length,m->data,4); // Deletar depois!
-	printf("M%densagem enviada com sucesso. Tam = %d\n",sizeof(unsigned int),length);
+	//printf("M%densagem enviada com sucesso. Tam = %u\n",sizeof(unsigned int),length);
 	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	free(m);
 	return length;
