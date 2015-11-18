@@ -18,41 +18,46 @@ void operate_client() { //
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
             args = show_interface(comm,args,buf);
-            printf("Comm: %d - Args: '%s'\n",*comm,args);
+            //printf("Comm: %d - Args: '%s'\n",*comm,args);
             if(*comm == 1) {
                 print_ls(ls(LocalPath,args));
             } else if(*comm == 2) {
                 check_cd(args);
             } else if(*comm == 3) {
-                puts("(operate_client) Sending ls request.");
+                //puts("(operate_client) Sending ls request.");
                 while(req_ls(args) == 0);
-                    //printf("(operate_client) Not able to send a LS request.");
-                puts("(operate_client) Listening to ls...");
+                //puts("(operate_client) Listening to ls...");
                 listen_ls();
+                puts("(operate_client) Rls was succesfull!\n\n");
             } else if(*comm == 4) {
-                puts("(operate_client) Sending cd request.");
+                //puts("(operate_client) Sending cd request.");
                 while(req_cd(args) == 0);
+                puts("(operate_client) Rcd was succesfull!\n\n");
             } else if(*comm == 5) {
-                puts("(operate_client) Sending put request.");
+                //puts("(operate_client) Sending put request.");
                 buf = strcpy(buf,LocalPath);
-                fp = fopen(strcat(buf,args),"r");
-                while(req_put(args) == 0);
-                length = send_filesize(fp);
-                send_file(fp,length);
-                //if(send_file(fp,length) != 1)
-                //    puts("(operate_client) Could not send file.");
+                buf = strcat(buf,args);
+                if((fp = fopen(buf,"r")) == NULL) {
+                    puts("(operate_client) File does not exist.");
+                } else {
+                    while(req_put(args) == 0);
+                    length = send_filesize(fp);
+                    if(send_file(fp,length) != 1)
+                        puts("(operate_client) Could not send file.");
+                    puts("(operate_client) Put was succesfull!\n\n");
+                }
             } else if(*comm == 6) {
-                puts("(operate_client) Sending get request.");
+                //puts("(operate_client) Sending get request.");
                 while(req_get(args) == 0);
-                strcpy(addr,LocalPath); // Concatenating file name.
-                strcat(addr,args);   // Concatenating file name.
+                addr = strcpy(addr,LocalPath); // Concatenating file name.
+                addr = strcat(addr,args);   // Concatenating file name.
                 if((fp = fopen(addr,"w")) == NULL) {
                     puts("(operate_server) Could not create a new file.");
                     exit(1);
+                } else {
+                    receive_file(fp);
+                    puts("(operate_client) Get was succesfull!\n\n");
                 }
-                receive_file(fp);
-                fclose(fp);
-                puts("(operate_client) Get was succesfull!");
             } else {
                 if(*comm != 7)
                     puts("(operate_client) Invalid option. Please, type another number.");
@@ -67,11 +72,11 @@ int req_ls(char *args) {
     Attr attrs;
     int i;
     m = malloc_msg(0); // Data is empty
-    printf("(req_ls) argumentos: %s\n", args);
+    //printf("(req_ls) argumentos: %s\n", args);
     attrs = prepare_attr(strlen(args),Seq,TYPE_LS);
     m = prepare_msg(attrs,args);
     send_msg(m);
-    puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
+    //puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
     while(!(i = wait_response()))
         send_msg(m);
     if(i == 1) { // Got an ACK
@@ -102,7 +107,7 @@ int req_cd(char *args) {
     attrs = prepare_attr(len,Seq,TYPE_CD);
     m = prepare_msg(attrs,args);
     send_msg(m);
-    puts("(req_cd) Waiting for ls response..."); // Wait for an ACK
+    //puts("(req_cd) Waiting for cd response..."); // Wait for an ACK
     i = 0;
     while((i = wait_response()) == 0)
         send_msg(m);
@@ -134,11 +139,11 @@ int req_put(char *args) {
         return -1;
     }
     m = malloc_msg(len); // Data is empty
-    printf("(req_put) argumentos: %s\n", args);
+    //printf("(req_put) argumentos: %s\n", args);
     attrs = prepare_attr(strlen(args),Seq,TYPE_PUT);
     m = prepare_msg(attrs,args);
     send_msg(m);
-    puts("(req_put) Waiting for put response..."); // Wait for an ACK
+    //puts("(req_put) Waiting for put response..."); // Wait for an ACK
     while(!(i = wait_response()))
         send_msg(m);
     if(i == 1) { // Got an ACK
@@ -166,12 +171,12 @@ int req_get(char *args) {
         return -1;
     }
     m = malloc_msg(len);
-    printf("(req_get) argumentos: %s\n", args);
+    //printf("(req_get) argumentos: %s\n", args);
     attrs = prepare_attr(strlen(args),Seq,TYPE_GET);
     m = prepare_msg(attrs,args);
-    send_msg(m);
-    puts("(req_get) Waiting for get response..."); // Wait for an ACK
-    while(!(i = wait_response()))
+    send_msg(m); // Sending get request
+    //puts("(req_get) Waiting for get response..."); // Wait for an ACK
+    while(!(i = wait_response())) // Waiting an ACK.
         send_msg(m);
     if(i == 1) { // Got an ACK - Server will send file_size
         puts("(req_get) Got an ack.");

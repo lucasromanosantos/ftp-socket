@@ -43,8 +43,8 @@ int receive(unsigned char *data, Message **m, int timeout) {
             memcpy(&a,data+1,2);
             int i;
             *m = str_to_msg(data);
-            printf("(receive)Got this message(%d):",a.len);
-            print_message(*m);
+            //printf("(receive) Got this message(%d):",a.len);
+            //print_message(*m);
             return 1; // Success
         }
     }
@@ -66,31 +66,30 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
-            puts("(wait_response) Got an ack! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got an ack! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 1;
         } else if(m->attr.type == TYPE_NACK) {
-            puts("(wait_response) Got a nack! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got a nack! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 0;
         } else if(m->attr.type == TYPE_ERROR) {
-            puts("(wait_response) Got an error! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got an error! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return -1;
         } else {
-            puts("(wait_response) Panic!!\n");
+            //puts("(wait_response) Panic!!\n");
             free(buffer);
             free(m);
             return -2;
         }
-    }
-    else {
+    } else {
         puts("(wait_response) Error! Timeout? \n");
         free(buffer);
         free(m);
@@ -99,8 +98,12 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 }
 
 int print_message(Message *m) {
-    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n",
-        m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '",m->init, m->attr.len, m->attr.seq, m->attr.type);
+    int i;
+    for(i=0; i<(int)m->attr.len; ++i) {
+        printf("%c",m->data[i]);
+    }
+    printf("' | Par: %d \n", m->par);
     return 1;
 }
 

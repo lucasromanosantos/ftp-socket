@@ -111,7 +111,6 @@ void operate_server() {
                     send_file(fp,length);
                     //if(send_file(fp,length) != 1)
                     //    puts("(operate_client) Could not send file.");
-                    puts("\t(operate_server) Ready to receive a Get. Ack sent.");
                 }
             }
         }

@@ -31,7 +31,7 @@ unsigned char get_parity(Message *m) {
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
-    printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
+    //printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
     return res;
 }
 
@@ -72,8 +72,8 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
 
     fgets(buffer,1024,stdin);
     buffer[strlen(buffer) - 1] = '\0';
-    printf("Buffer: ");
-    puts(buffer);
+    //printf("Buffer: ");
+    //puts(buffer);
 
     len = strlen(arg);
     for(i=0; i<len; i++)
