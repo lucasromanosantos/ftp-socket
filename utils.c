@@ -31,7 +31,7 @@ unsigned char get_parity(Message *m) {
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
-    printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
+    //printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
     return res;
 }
 

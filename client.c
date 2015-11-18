@@ -51,7 +51,7 @@ void operate_client() { //
                     exit(1);
                 }
                 receive_file(fp);
-                fclose(fp);
+                //fclose(fp);
                 puts("(operate_client) Get was succesfull!");
             } else {
                 if(*comm != 7)
