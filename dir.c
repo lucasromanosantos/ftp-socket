@@ -154,8 +154,7 @@ char* ls(char* path, char* args) { // generic ls
                     strcat(this, file->d_name);
                     strcat(this, "\n");
                 }
-            }
-            else {
+            } else {
                 strcat(this, file->d_name);
                 strcat(this, "\n");
             }

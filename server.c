@@ -52,8 +52,9 @@ void send_ls(char *args) { //
 
 void operate_server() {
     unsigned char *buffer,*buffer2,*addr,par;
-    int res = 0;
+    int res = 0, length;
     Message *m;
+    FILE *fp;
 
     if((buffer2 = malloc(MIN_LEN)) == NULL)
         error("(operate_server) Error allocating memory.");
@@ -79,34 +80,40 @@ void operate_server() {
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     //printf("data dentro da mensagem: %s \n", m->data);
                     send_ls(m->data);
-                    puts("\t(operate_server) Ls sent.");
+                    puts("\t(operate_server) Ls was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
                     puts("\t(operate_server) Received Cd. Ack sent.");
                     if(!check_cd(m->data)) {
                         puts("\t(operate_server) Cd path was wrong. Error occured.");
                         send_type(TYPE_ERROR);
                     } else {
-                        puts("\t(operate_server) Path updated succesfully.");
+                        puts("\t(operate_server) Path updated succesfully.\n\n");
                         send_type(TYPE_ACK);
                     }
                 } else if (m->attr.type == TYPE_PUT) { // client request PUT
                     send_type(TYPE_ACK);
                     puts("\t(operate_server) Ready to receive a Put. Ack sent.");
                     strcpy(addr,LocalPath); // Concatenating file name.
-                    strcat(addr,m->data); // Concatenating file name.
-                    FILE *fp;
+                    strcat(addr,m->data);   // Concatenating file name.
                     if((fp = fopen(addr,"w")) == NULL) {
                         puts("Could not create a new file.");
                         exit(1);
                     }
                     receive_file(fp);
-                    puts("I should have received a file. Please, check it.");
+                    puts("(operate_server) Put was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
-                    puts("\t(operate_server) Ready to receive a Get. Ack sent.");
+                    addr = strcpy(addr,LocalPath);
+                    strcat(addr,m->data);
+                    if((fp = fopen(addr,"r")) == NULL) {
+                        puts("(operate_server) File does not exist.");
+                    } else {
+                        length = send_filesize(fp);
+                        if(send_file(fp,length) != 1)
+                            puts("(operate_server) Could not send file.");
+                        puts("(operate_server) Get was succesfull!\n\n");
+                    }
                 }
-                //send_type(TYPE_ACK);
-                //puts("\t(operate_server) Ack sent.");
             }
         }
     }

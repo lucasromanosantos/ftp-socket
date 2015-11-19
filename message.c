@@ -43,6 +43,8 @@ int receive(unsigned char *data, Message **m, int timeout) {
             memcpy(&a,data+1,2);
             int i;
             *m = str_to_msg(data);
+            //printf("(receive) Got this message(%d):",a.len);
+            //print_message(*m);
             return 1; // Success
         }
     }
@@ -64,31 +66,30 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
-            puts("(wait_response) Got an ack! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got an ack! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 1;
         } else if(m->attr.type == TYPE_NACK) {
-            puts("(wait_response) Got a nack! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got a nack! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 0;
         } else if(m->attr.type == TYPE_ERROR) {
-            puts("(wait_response) Got an error! \n");
-            Seq = (Seq + 1) % 64;
+            //puts("(wait_response) Got an error! \n");
+            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return -1;
         } else {
-            puts("(wait_response) Panic!!\n");
+            //puts("(wait_response) Panic!!\n");
             free(buffer);
             free(m);
             return -2;
         }
-    }
-    else {
+    } else {
         puts("(wait_response) Error! Timeout? \n");
         free(buffer);
         free(m);
@@ -97,8 +98,13 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 }
 
 int print_message(Message *m) {
-    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '%s' | Par: %d \n",
-        m->init, m->attr.len, m->attr.seq, m->attr.type, m->data, m->par);
+<<<<<<< HEAD
+    printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '",m->init, m->attr.len, m->attr.seq, m->attr.type);
+    int i;
+    for(i=0; i<(int)m->attr.len; ++i) {
+        printf("%c",m->data[i]);
+    }
+    printf("' | Par: %d \n", m->par);
     return 1;
 }
 
@@ -111,7 +117,8 @@ Message* malloc_msg(int length) {
 
 int msg_length(Message *m) {
     // init | attr | data | par | '\0'
-    return   1 +  2 + strlen(m->data) + 1 + 1;
+    //return   1 +  2 + strlen(m->data) + 1 + 1; // I changed this 26/10. It might bug something.
+    return 1 + 2 + m->attr.len + 1 + 1;
 }
 
 char* msg_to_str(Message *m) {
@@ -142,7 +149,7 @@ Message* str_to_msg(char* c) {
         error("(str_to_msg) Unable to allocate memory.");
     m->data = memcpy(m->data, c + 3, m->attr.len);
     m->data[m->attr.len] = '\0';
-    m->par = c[strlen2(c)-1];
+    m->par = c[3 + (int)m->attr.len];
     return m;
 }
 
@@ -155,7 +162,8 @@ Message* prepare_msg(Attr attr, unsigned char *data) {
     m->attr.type = attr.type;
     if((m->data = malloc(sizeof(char) * (attr.len))) == NULL)
         error("(prepare_msg) Unable to allocate memory.");
-    strcpy(m->data, data);
+    //strcpy(m->data, data);
+    memcpy(m->data,data,(int)attr.len);
     m->par = get_parity(m);
     return m;
 }
@@ -178,7 +186,7 @@ int send_msg(Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    printf("\t(send_msg) Enviando: ");
+    printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
     print_message(m);
     // Actually send the message.
     while(length > 0) {

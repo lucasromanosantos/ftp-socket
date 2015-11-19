@@ -31,25 +31,7 @@ void write_file(FILE *fp,unsigned char *c,int size) {
 		i += fwrite(c,sizeof(unsigned char),size-i,fp);
 	return ;
 }
-/*
-int main() {
-	FILE* fp;
-	if(!(fp = fopen("./main2.c","r"))) {
-		printf("Couldnt open file.\n");
-		exit(1);
-	}
-	unsigned int size = get_file_size(fp);
-	unsigned char* c = read_file(fp,size);
-	fclose(fp);
-	if(!(fp = fopen("copy.c","w"))) {
-		printf("Couldnt open file.\n");
-		exit(1);
-	}
-	write_file(fp,c,size);
-	fclose(fp);
-	return 0;
-}
-*/
+
 int send_file(FILE *fp,int len) {
 	int nob = 0,i;
 	unsigned char *c;
@@ -101,15 +83,19 @@ int send_filesize(FILE* fp) {
 	unsigned int length = get_file_size(fp);
 	Message *m;
 	Attr a;
-	m = malloc_msg(sizeof(unsigned int));
 	a = prepare_attr(sizeof(unsigned int),Seq,TYPE_FILESIZE);
-	unsigned char s[5];
-	memcpy(s,&length,sizeof(unsigned int));
+	unsigned char *s = malloc(5 * sizeof(unsigned char));
+	s[4] = '\0';
+	//printf("The length is going to be %u",length);
+	//s = memcpy(s,&length,4);
+	memcpy(s,&length,4);
 	m = prepare_msg(a,s);
 	send_msg(m);
 	while(!wait_response) {
 		send_msg(m);
 	}
+	memcpy(&length,m->data,4); // Deletar depois!
+	//printf("M%densagem enviada com sucesso. Tam = %u\n",sizeof(unsigned int),length);
 	//Seq = (Seq + 1) % 64; Send_msg increment seq counter
 	free(m);
 	return length;
@@ -144,13 +130,18 @@ void receive_file(FILE *fp) {
 
     res = receive(buf, &m, STD_TIMEOUT);
 	par = get_parity(m);
-	if(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
-		// This should be a while, sending nack and waiting for the right message.
-		puts("(receive_file) Parity error or message wasnt the file size.");
-		return ;
+
+	while(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
+		puts("(receive_file) Parity error or message was not the file size.");
+		send_type(TYPE_NACK);
+		res = receive(buf, &m, STD_TIMEOUT);
+		par = get_parity(m);
 	}
-	int size,i=0,j;
+
+	unsigned int size,i=0,j;
 	memcpy(&size,m->data,4);
+	send_type(TYPE_ACK);
+
 	while(i < size) {
 	    res = receive(buf, &m, STD_TIMEOUT);
 		par = get_parity(m);
