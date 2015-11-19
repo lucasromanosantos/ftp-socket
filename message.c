@@ -6,9 +6,6 @@ int msg_length(Message *m);
 char* msg_to_str(Message *m);
 Message* str_to_msg(char* c);
 Message* prepare_msg(Attr attr, unsigned char *data);
-void send_ack();
-void send_nack();
-void send_error();
 void send_type(int type);
 int send_msg(Message *m);
 int receive(unsigned char *data, Message **m, int timeout);
@@ -31,8 +28,7 @@ int receive(unsigned char *data, Message **m, int timeout) {
         puts("\t(recv_tm) Timeout! No data received! Is the server working?");
         return 0; // Fail
     }
-    else {
-        // Read the message. If the first byte isnt the init (0111 1110), discard the message.
+    else { // Read the message. If the first byte isnt the init (0111 1110), discard the message.
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(Socket, data, MAX_LEN, 0);
@@ -43,6 +39,16 @@ int receive(unsigned char *data, Message **m, int timeout) {
             memcpy(&a,data+1,2);
             int i;
             *m = str_to_msg(data);
+            char par = get_parity(*m);
+            if(par != (*m)->par) {
+                send_type(TYPE_NACK);
+                return 0;
+            }
+            if(Seq + 1 != (*m)->attr.seq) {
+                send_type(TYPE_NACK);
+                return 0;
+            }
+            Seq = (Seq + 1) % 64;
             //printf("(receive) Got this message(%d):",a.len);
             //print_message(*m);
             return 1; // Success
@@ -98,7 +104,6 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 }
 
 int print_message(Message *m) {
-<<<<<<< HEAD
     printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '",m->init, m->attr.len, m->attr.seq, m->attr.type);
     int i;
     for(i=0; i<(int)m->attr.len; ++i) {
@@ -174,7 +179,7 @@ void send_type(int type) {
  */
     Message *m;
     m = malloc_msg(0); // No data in this message, so, its length is 0.
-    Attr attr = prepare_attr(0,0,type);
+    Attr attr = prepare_attr(0,Seq,type);
     m = prepare_msg(attr,"0");
     send_msg(m);
     free(m);
@@ -193,6 +198,7 @@ int send_msg(Message *m) {
         n = send(Socket, s, length, 0);
         printf("\t(send_msg) %d bits enviados... \n", (int)n);
         //if(n <= 0) break; // Error
+        Seq = (Seq + 1) % 64;
         if(n < 0) {
             printf("\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
         }
@@ -204,3 +210,104 @@ int send_msg(Message *m) {
         Seq = (Seq + 1) % 64;
     return (n <= 0) ? - 1 : 0;
 }
+
+
+    // Inicio send_ls
+    while(nob > 0) {
+        if(nob >= MAX_DATA_LEN) {
+            char tmp[64];
+            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
+            strncpy(tmp, result, MAX_DATA_LEN);
+            m = prepare_msg(attrs, tmp);
+            send_msg(m);
+            result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
+            nob -= MAX_DATA_LEN;
+            if(!wait_response()) {
+                send_type(TYPE_ERROR);
+                break;
+            }
+        } else {
+            char tmp[nob + 1];
+            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
+            m = malloc_msg(attrs.len);
+            strncpy(tmp, result, nob);
+            m = prepare_msg(attrs, tmp);
+            send_msg(m);
+            nob = 0;
+            if(wait_response()) {
+                send_type(TYPE_END);
+            } else {
+                send_type(TYPE_ERROR);
+            }
+        }
+    }
+    // Fim send_ls
+
+    Message **n;
+    Message m = malloc_msg(MAX_DATA_LEN);
+    n = malloc(sizeof(*Message) * 4);
+    for(i=0; i<4; i++) {
+        n[i] = malloc_msg(MAX_DATA_LEN);
+    }
+
+    char **tmp;
+    tmp = malloc(4 * sizeof(char*));
+    for(i=0; i<4; i++) {
+        tmp[i] = malloc(sizeof(char) * 64);
+    }
+    char *aux;
+    int sendIndex = 0; // Indice da mensagem que estamos enviando.
+    int createIndex = 0; // Indice da mensagem que estamos criando.
+    int count = 0;
+    int errSeq; // Qual o Seq da mensagem errada?
+    int goBack; // Recebi um erro. Quantas mensagens tenho que voltar?
+
+    Attr *attrs; // FALTA ALLOCAR
+    attrs = malloc(4 * sizeof(Attr));
+
+    while(nob > 0) {
+        if(nob >= 4 * MAX_DATA_LEN) {
+            attrs[i] = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
+            strncpy(tmp[i], result, MAX_DATA_LEN);
+            n[i] = prepare_msg(attrs[i], tmp[i]);
+            send_msg(n[i]);
+            result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
+            nob -= MAX_DATA_LEN;
+            i = (i+1) % 4;
+            if(receive(aux,&(m),1) != 0) { // Check if I got a message for 1ms. If I did not, continue sending messages.
+                if(m->attr.type == TYPE_NACK) { // The first char has the number (Seq) of the message that had an error.
+                    // Got a nack. I have to get which message (m) had an error, and send every message since m.
+                    count = 0;
+                    errSeq = aux[0] - 48;
+                    goBack = Seq - errSeq; // Isso nao funciona direito (62 - 0?). Tem que pensar em um jeito esperto pra fazer isso.
+                    i -= goBack; // Tambem nao funciona por ser circular. Tem que pensar em um jeito mais esperto.
+                } else if(m->attr.type == TYPE_ACK) {
+                    count = 0;
+                }
+            } else { // Timed Out. No response. Send next Message.
+                count++;
+            }
+            if(count == 4) {
+                if(!wait_response()) {
+                    send_type(TYPE_ERROR);
+                    break;
+                }
+            }
+        } else { // TAH TODO ERRADO ESSE ELSE! TEM QUE FAZER AINDA!
+            char tmp[nob + 1];
+            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
+            m = malloc_msg(attrs.len);
+            strncpy(tmp, result, nob);
+            m = prepare_msg(attrs, tmp);
+            send_msg(m);
+            nob = 0;
+            if(wait_response()) {
+                send_type(TYPE_END);
+            } else {
+                send_type(TYPE_ERROR);
+            }
+        }
+    }
+
+
+*/

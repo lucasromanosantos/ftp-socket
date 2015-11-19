@@ -266,7 +266,7 @@ void send_string() {
     buffer = fgets(buffer, BUF_SIZE, stdin);
     buffer[strlen(buffer)-1] = '\0'; // Removing the \n
     Message *m;
-    Attr attrs = prepare_attr(strlen(buffer),1,TYPE_FILESIZE);
+    Attr attrs = prepare_attr(strlen(buffer),Seq,TYPE_FILESIZE);
     m = malloc_msg(attrs.len + 5);
     m = prepare_msg(attrs, buffer);
     send_msg(m);
