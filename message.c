@@ -212,36 +212,6 @@ int send_msg(Message *m) {
 }
 
 
-    // Inicio send_ls
-    while(nob > 0) {
-        if(nob >= MAX_DATA_LEN) {
-            char tmp[64];
-            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
-            strncpy(tmp, result, MAX_DATA_LEN);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-            result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
-            nob -= MAX_DATA_LEN;
-            if(!wait_response()) {
-                send_type(TYPE_ERROR);
-                break;
-            }
-        } else {
-            char tmp[nob + 1];
-            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
-            m = malloc_msg(attrs.len);
-            strncpy(tmp, result, nob);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-            nob = 0;
-            if(wait_response()) {
-                send_type(TYPE_END);
-            } else {
-                send_type(TYPE_ERROR);
-            }
-        }
-    }
-    // Fim send_ls
 
     Message **n;
     Message m = malloc_msg(MAX_DATA_LEN);
@@ -262,7 +232,7 @@ int send_msg(Message *m) {
     int errSeq; // Qual o Seq da mensagem errada?
     int goBack; // Recebi um erro. Quantas mensagens tenho que voltar?
 
-    Attr *attrs; // FALTA ALLOCAR
+    Attr *attrs; 
     attrs = malloc(4 * sizeof(Attr));
 
     while(nob > 0) {
@@ -273,32 +243,56 @@ int send_msg(Message *m) {
             send_msg(n[i]);
             result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
             nob -= MAX_DATA_LEN;
-            i = (i+1) % 4;
+            i = (i+1) % 4; // window index 
             if(receive(aux,&(m),1) != 0) { // Check if I got a message for 1ms. If I did not, continue sending messages.
                 if(m->attr.type == TYPE_NACK) { // The first char has the number (Seq) of the message that had an error.
                     // Got a nack. I have to get which message (m) had an error, and send every message since m.
-                    count = 0;
-                    errSeq = aux[0] - 48;
-                    goBack = Seq - errSeq; // Isso nao funciona direito (62 - 0?). Tem que pensar em um jeito esperto pra fazer isso.
-                    i -= goBack; // Tambem nao funciona por ser circular. Tem que pensar em um jeito mais esperto.
-                } else if(m->attr.type == TYPE_ACK) {
-                    count = 0;
+                    int seq_nack = m->attr.seq;
+                    printf("sequencia do naq recebida: %d, na sequencia (count) atual %d \n", seq_nack, count);
+                    count = Seq - seq_nack;
+                    result -= MAX_DATA_LEN * seq_nack; // Result pointer go back
+                    nob += MAX_DATA_LEN * seq_nack;
+                    i -= count; //check
+
+                    Seq -= count;
+                    printf("status atual: volta result %d vezes, aumenta nob %d vezes, i = %d e seq = %d \n", seq_nack, seq_nack, i, Seq);
+                } else if(m->attr.type == TYPE_ACK && i == 0) {
+                    printf("Recebeu ack e terminou janela. Keep going... \n");
+                    //fazer algo? 
                 }
-            } else { // Timed Out. No response. Send next Message.
-                count++;
+            } else {
+                printf("Timeout!! \n"); // tratar
             }
-            if(count == 4) {
-                if(!wait_response()) {
-                    send_type(TYPE_ERROR);
-                    break;
-                }
-            }
+            //if(count == 4) {
+            //   if(!wait_response()) {
+            //        send_type(TYPE_ERROR);
+            //        break;
+            //    }
+            //   else {
+            //        printf("enviou 4! ack recebido \n");
+            //    }
+            //}
         } else { // TAH TODO ERRADO ESSE ELSE! TEM QUE FAZER AINDA!
             char tmp[nob + 1];
             attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             m = malloc_msg(attrs.len);
             strncpy(tmp, result, nob);
             m = prepare_msg(attrs, tmp);
+            
+            if(receive(aux, &(m), 1) != 0) {
+                if(m->attr.type == TYPE_NACK) {
+                    int seq_nack = m->attr.seq;
+                    count = Seq - seq_nack;
+                    result -= MAX_DATA_LEN * count; // Result pointer go back
+                    
+
+                } else if(m->attr.type == TYPE_ACK) {
+                    count 
+                }
+            }
+            if(i == 0) {
+
+            }
             send_msg(m);
             nob = 0;
             if(wait_response()) {
