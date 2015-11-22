@@ -98,7 +98,6 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 }
 
 int print_message(Message *m) {
-<<<<<<< HEAD
     printf("Msg-> Init: %u | Len: %d | Seq: %d | Type: %d | Msg: '",m->init, m->attr.len, m->attr.seq, m->attr.type);
     int i;
     for(i=0; i<(int)m->attr.len; ++i) {
