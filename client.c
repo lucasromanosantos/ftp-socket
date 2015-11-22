@@ -194,32 +194,32 @@ int req_get(char *args) {
 }
 
 
-Message* wait_data(Message* m) {
+Message* wait_data() {
     unsigned char *buffer;
     time_t seconds = 3;
     time_t endwait;
     int i;
-    Message *m2;
+    Message *m;
     if((buffer = malloc(1024)) == NULL)
         return 0;
     buffer[0] = '\0';
-    m2 = malloc_msg(63);
+    m = malloc_msg(63);
     //m = realloc(m,68);
     endwait = time(NULL) + seconds;
 
     while(time(NULL) < endwait && i != 1 && buffer[0] != 126) {
-        i = receive(buffer, &m2, STD_TIMEOUT);
+        i = receive(buffer, &m, STD_TIMEOUT);
     }
     if(i == 1) {
         free(buffer);
         Seq = (Seq + 1) % 64;
-        return m2;
+        return m;
     }
     else {
         puts("(wait_data) Error! Timeout? \n");
-        m2->attr = prepare_attr(0,0,TYPE_ERROR);
+        m->attr = prepare_attr(0,0,TYPE_ERROR);
         free(buffer);
-        return m2;
+        return m;
     }
 }
 
@@ -248,8 +248,8 @@ int listen_ls() {
         else {
             //puts("(listen_ls) Can not handle this message.");
         }
-        free(m); // m will be allocated again in wait_data. - Might bug something.
-        m = wait_data(m);
+        //free(m); // m will be allocated again in wait_data. - Might bug something.
+        m = wait_data();
         print_message(m);
     }
     send_type(TYPE_ACK); // Sending an ack to TYPE_END message.
