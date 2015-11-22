@@ -27,7 +27,8 @@ void operate_client() { //
                 //puts("(operate_client) Sending ls request.");
                 while(req_ls(args) == 0);
                 //puts("(operate_client) Listening to ls...");
-                listen_ls();
+                printf("LS com janelas. \n");
+                jlisten_ls();
                 puts("(operate_client) Rls was succesfull!\n\n");
             } else if(*comm == 4) {
                 //puts("(operate_client) Sending cd request.");
@@ -77,8 +78,9 @@ int req_ls(char *args) {
     m = prepare_msg(attrs,args);
     send_msg(m);
     //puts("(req_ls) Waiting for ls response..."); // Wait for an ACK
-    while(!(i = wait_response()))
+    while(!(i = wait_response())) {
         send_msg(m);
+    }
     if(i == 1) { // Got an ACK
         // Server will start sending the data.
         puts("(req_ls) Got an ack.");
@@ -212,7 +214,7 @@ Message* wait_data(Message* m) {
     }
     if(i == 1) {
         free(buffer);
-        Seq = (Seq + 1) % 64;
+        //Seq = (Seq + 1) % 64;
         return m2;
     }
     else {
@@ -221,6 +223,54 @@ Message* wait_data(Message* m) {
         free(buffer);
         return m2;
     }
+}
+
+
+int jlisten_ls() {
+    Message *m;
+    unsigned char *c;
+    int size = 0;
+    Seq = 0;
+    //c = malloc(MAX_DATA_LEN * sizeof(unsigned char) + 1);
+    c = malloc(10000); // !!!!!!
+
+    m = malloc_msg(MAX_DATA_LEN);
+    m = wait_data(m);
+    printf(" VER VER VER Primeira mensagem::: \n"); // temp
+    print_message(m);
+    Seq += 1;
+    c[0] = '\0'; // Initializing an empty string.
+
+    while (m->attr.type != TYPE_END) {
+        printf("Seq atual: %d \n", Seq);
+        if(m->attr.type == TYPE_ERROR) {
+            puts("\t(listen_ls) Problem receiving message. Type_error sent");
+            send_type(TYPE_NACK);
+        } else if (m->attr.type == TYPE_SHOWSCREEN) {
+            size += (int) m->attr.len;
+            //printf("(listen_ls) Size of message type showscreen: %d \n", size);
+            c = realloc(c,sizeof(char) * (size + 1));
+            strncat(c, m->data, m->attr.len);
+            
+            if ( (Seq % 4) == 0 && Seq != 0) {
+                printf("\t Sending ACK after 4 messages (full window) \n");
+                send_type(TYPE_ACK);
+            }
+        }
+        else {
+            printf("(listen_ls) Can not handle this message.");
+        }
+        free(m); // m will be allocated again in wait_data. - Might bug something.
+        m = wait_data(m);
+        print_message(m);
+        Seq += 1;
+    }
+    printf("\tGot type_end. Sending ack");
+    send_type(TYPE_ACK); // Sending an ack to TYPE_END message.
+    print_ls(c);
+    free(c);
+    free(m);
+    return 1;
 }
 
 int listen_ls() {
@@ -258,6 +308,8 @@ int listen_ls() {
     free(m);
     return 1;
 }
+
+
 /*
 void send_string() {
     unsigned char *buffer;

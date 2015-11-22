@@ -17,15 +17,17 @@ int receive(unsigned char *data, Message **m, int timeout) {
     ufds[0].fd = Socket;
     ufds[0].events = POLLIN; // check for just normal data
     //rv = poll(ufds, 1, timeout);
-    rv = poll(ufds, 1, -1);
-    time_t start = time(NULL);
-    while(time(NULL) < start + 3 && rv <= 0) {
-        rv = poll(ufds,1,-1);
-    }
+    //rv = poll(ufds, 1, -1);
+    rv = poll(ufds, 1, 500);
+    //time_t start = time(NULL);
+    //while(time(NULL) < start + 3 && rv <= 0) {
+    //    rv = poll(ufds,1,-1);     TESTE
+    //}
+
     if(rv == -1)
         error("(recv_tm) Erro no poll");
     else if (rv == 0) {
-        puts("\t(recv_tm) Timeout! No data received! Is the server working?");
+        //puts("\t(recv_tm) Timeout! No data received! Is the server working?");
         return 0; // Fail
     }
     else { // Read the message. If the first byte isnt the init (0111 1110), discard the message.
@@ -37,20 +39,21 @@ int receive(unsigned char *data, Message **m, int timeout) {
             }
             Attr a;
             memcpy(&a,data+1,2);
-            int i;
-            *m = str_to_msg(data);
+            
+            *m = str_to_msg(data);/*
             char par = get_parity(*m);
             if(par != (*m)->par) {
                 send_type(TYPE_NACK);
                 return 0;
             }
-            if(Seq + 1 != (*m)->attr.seq) {
+            if(Seq + 1 != (*m)->attr.seq) { isto acho que n vai ter 
                 send_type(TYPE_NACK);
+                printf("seq fucked");
                 return 0;
             }
-            Seq = (Seq + 1) % 64;
-            //printf("(receive) Got this message(%d):",a.len);
-            //print_message(*m);
+            Seq = (Seq + 1) % 64; 
+            printf("(receive) Got this message(%d):",a.len);
+            print_message(*m); */
             return 1; // Success
         }
     }
@@ -196,9 +199,9 @@ int send_msg(Message *m) {
     // Actually send the message.
     while(length > 0) {
         n = send(Socket, s, length, 0);
-        printf("\t(send_msg) %d bits enviados... \n", (int)n);
+        //printf("\t(send_msg) %d bits enviados... \n", (int)n);
         //if(n <= 0) break; // Error
-        Seq = (Seq + 1) % 64;
+        //Seq = (Seq + 1) % 64;
         if(n < 0) {
             printf("\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
         }
@@ -207,101 +210,6 @@ int send_msg(Message *m) {
     }
     //free(s);
     if(n <= 0)
-        Seq = (Seq + 1) % 64;
+       //Seq = (Seq + 1) % 64;
     return (n <= 0) ? - 1 : 0;
 }
-
-
-
-    Message **n;
-    Message m = malloc_msg(MAX_DATA_LEN);
-    n = malloc(sizeof(*Message) * 4);
-    for(i=0; i<4; i++) {
-        n[i] = malloc_msg(MAX_DATA_LEN);
-    }
-
-    char **tmp;
-    tmp = malloc(4 * sizeof(char*));
-    for(i=0; i<4; i++) {
-        tmp[i] = malloc(sizeof(char) * 64);
-    }
-    char *aux;
-    int sendIndex = 0; // Indice da mensagem que estamos enviando.
-    int createIndex = 0; // Indice da mensagem que estamos criando.
-    int count = 0;
-    int errSeq; // Qual o Seq da mensagem errada?
-    int goBack; // Recebi um erro. Quantas mensagens tenho que voltar?
-
-    Attr *attrs; 
-    attrs = malloc(4 * sizeof(Attr));
-
-    while(nob > 0) {
-        if(nob >= 4 * MAX_DATA_LEN) {
-            attrs[i] = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
-            strncpy(tmp[i], result, MAX_DATA_LEN);
-            n[i] = prepare_msg(attrs[i], tmp[i]);
-            send_msg(n[i]);
-            result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
-            nob -= MAX_DATA_LEN;
-            i = (i+1) % 4; // window index 
-            if(receive(aux,&(m),1) != 0) { // Check if I got a message for 1ms. If I did not, continue sending messages.
-                if(m->attr.type == TYPE_NACK) { // The first char has the number (Seq) of the message that had an error.
-                    // Got a nack. I have to get which message (m) had an error, and send every message since m.
-                    int seq_nack = m->attr.seq;
-                    printf("sequencia do naq recebida: %d, na sequencia (count) atual %d \n", seq_nack, count);
-                    count = Seq - seq_nack;
-                    result -= MAX_DATA_LEN * seq_nack; // Result pointer go back
-                    nob += MAX_DATA_LEN * seq_nack;
-                    i -= count; //check
-
-                    Seq -= count;
-                    printf("status atual: volta result %d vezes, aumenta nob %d vezes, i = %d e seq = %d \n", seq_nack, seq_nack, i, Seq);
-                } else if(m->attr.type == TYPE_ACK && i == 0) {
-                    printf("Recebeu ack e terminou janela. Keep going... \n");
-                    //fazer algo? 
-                }
-            } else {
-                printf("Timeout!! \n"); // tratar
-            }
-            //if(count == 4) {
-            //   if(!wait_response()) {
-            //        send_type(TYPE_ERROR);
-            //        break;
-            //    }
-            //   else {
-            //        printf("enviou 4! ack recebido \n");
-            //    }
-            //}
-        } else { // TAH TODO ERRADO ESSE ELSE! TEM QUE FAZER AINDA!
-            char tmp[nob + 1];
-            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
-            m = malloc_msg(attrs.len);
-            strncpy(tmp, result, nob);
-            m = prepare_msg(attrs, tmp);
-            
-            if(receive(aux, &(m), 1) != 0) {
-                if(m->attr.type == TYPE_NACK) {
-                    int seq_nack = m->attr.seq;
-                    count = Seq - seq_nack;
-                    result -= MAX_DATA_LEN * count; // Result pointer go back
-                    
-
-                } else if(m->attr.type == TYPE_ACK) {
-                    count 
-                }
-            }
-            if(i == 0) {
-
-            }
-            send_msg(m);
-            nob = 0;
-            if(wait_response()) {
-                send_type(TYPE_END);
-            } else {
-                send_type(TYPE_ERROR);
-            }
-        }
-    }
-
-
-*/
