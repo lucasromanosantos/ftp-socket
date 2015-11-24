@@ -120,6 +120,7 @@ Message* malloc_msg(int length) {
     Message *m;
     if((m = malloc(1 + 2 + length + 1 + 1)) == NULL)
         error("(malloc_msg) Unable to allocate memory.");
+    m->data = malloc(length);
     return m;
 }
 
