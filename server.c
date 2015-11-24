@@ -2,28 +2,28 @@
 #include "dir.c"
 
 void jsend_ls(char *args) { //
-    char *result = malloc(1024);
+    char *result;
     unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("(send_ls) Unable to allocate memory");
-        return;
-    }
     strcpy(result, ls(LocalPath,args));
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
 
-
+    Message *m;
+    Attr attrs;
     char *aux;
     int sendIndex = 0; // Indice da mensagem que estamos enviando.
     int createIndex = 0; // Indice da mensagem que estamos criando.
     int count = 0; // Recebi um erro. Quantas mensagens tenho que voltar? GO BACK
 
-    Message *m;
+    result = malloc(1024);
     m = malloc_msg(MAX_DATA_LEN);
-    Attr attrs;
+    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
+        puts("(send_ls) Unable to allocate memory");
+        return;
+    }
 
     Seq = 0;
-    count=0;
+    count = 0;
 
     // I have to initialize first message
     while(nob > 0) {
@@ -35,12 +35,11 @@ void jsend_ls(char *args) { //
             strncpy(tmp, result, MAX_DATA_LEN);
             m = prepare_msg(attrs, tmp);
 
-            if ((Seq % 4) != 0 || Seq == 0) { // && SEQ = TEMPORARY, POGZAO
-                send_msg(m);
-                Seq += 1; // Increase. Maybe just inside first if?
-                result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
-                nob -= MAX_DATA_LEN;
-            } else {
+            send_msg(m);
+            Seq += 1; // Increase. Maybe just inside first if?
+            result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
+            nob -= MAX_DATA_LEN;
+            if((Seq % 4) != 0 || Seq == 0) {
                 if(wait_response()) {
                     printf("\tGot 4th message ACK! \n");
                     send_msg(m);
@@ -65,9 +64,11 @@ void jsend_ls(char *args) { //
 
                     Seq -= goback;
                     printf("\tGot nack from client. Resending the last %d messages. new seq = %d, seq from nack = %d \n", goback, Seq, m->attr.seq);
+                } else if(m->attr.type == TYPE_ACK) {
+                    puts("FUCK YOU!");
                 }
             }
-         } else {
+        } else {
             char tmp[nob + 1];
             attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             m = malloc_msg(attrs.len);

@@ -205,8 +205,7 @@ Message* wait_data() {
         return 0;
     buffer[0] = '\0';
     Message *m;
-    m = malloc_msg(63);
-    //m = realloc(m,68);
+    m = malloc_msg(MAX_DATA_LEN);
     endwait = time(NULL) + seconds;
 
     while(time(NULL) < endwait && i != 1 && buffer[0] != 126) {
@@ -231,11 +230,10 @@ int jlisten_ls() {
     unsigned char *c;
     int size = 0;
     Seq = 0;
-    //c = malloc(MAX_DATA_LEN * sizeof(unsigned char) + 1);
     c = malloc(10000); // !!!!!!
 
     m = malloc_msg(MAX_DATA_LEN);
-    m = wait_data(m);
+    m = wait_data();
     printf(" VER VER VER Primeira mensagem::: \n"); // temp
     print_message(m);
     Seq += 1;
@@ -260,7 +258,7 @@ int jlisten_ls() {
         else {
             printf("(listen_ls) Can not handle this message.");
         }
-        //free(m); // m will be allocated again in wait_data. - Might bug something.
+        free(m); // m will be allocated again in wait_data. - Might bug something.
         m = wait_data();
         print_message(m);
         Seq += 1;
