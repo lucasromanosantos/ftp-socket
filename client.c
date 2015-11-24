@@ -311,7 +311,7 @@ int jsend_file(FILE *fp,int len) {
     Seq = 0;
     while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
         if(len > MAX_DATA_LEN) {
-            len -= MAX_DATA_LEN;
+            //len -= MAX_DATA_LEN;
             nob = 0;
             while(nob < MAX_DATA_LEN)
                 nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
@@ -337,18 +337,19 @@ int jsend_file(FILE *fp,int len) {
             c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
             m = prepare_msg(a,c);
             send_msg(m);
-           
+
             if(wait_response()) {
                 puts("Got last message ack. 4 Messages were sent succesfully");
+                len = 0;
             } else {
                 Seq -= 3;
                 fseek(fp, -1 * (MAX_DATA_LEN * (Seq - m->attr.seq) + len) , SEEK_CUR);
                 len += MAX_DATA_LEN * (Seq - m->attr.seq) + len;
             }
-           
+
         }
     }
-
+    puts("Gonna send type_end.");
     //Seq = (Seq + 1) % 64; Send_msg increment seq counter
     unsigned char s[0];
     a = prepare_attr(0,Seq,TYPE_END);
