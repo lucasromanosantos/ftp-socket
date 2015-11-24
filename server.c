@@ -310,12 +310,14 @@ void jreceive_file(FILE *fp) {
 
 
 
-
+    puts("Going to read the End Message.");
+    Message *m2 = malloc_msg(MAX_DATA_LEN);
     // Read all messages, created and updated the file, I should receive a TYPE_END.
-    res = receive(buf, &m, STD_TIMEOUT);
-    par = get_parity(m);
-    print_message(m);
-    if(((int)par != (int)m->par) || (m->attr.type != TYPE_END)) {
+    //res = receive(buf, &m2, STD_TIMEOUT);
+    while((receive(buf, &m2, STD_TIMEOUT)) == 0);
+    par = get_parity(m2);
+    print_message(m2);
+    if(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
         // This should be a while, sending nack and waiting for the right message.
         puts("(receive_file) Parity error or message wasnt an end.");
         return ;
