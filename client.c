@@ -286,28 +286,6 @@ int jsend_file(FILE *fp,int len) {
     if((c = malloc(sizeof(char) * 64)) == NULL)
         error("(send_file) Unable to allocate memory.");
 
-/*
-    while(len > MAX_DATA_LEN) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
-        len -= MAX_DATA_LEN;
-        nob = 0;
-        while(nob < MAX_DATA_LEN)
-            nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
-        a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
-        m = prepare_msg(a,c);
-        send_msg(m);
-        //Seq = (Seq + 1) % 64; Send_msg increment seq counter
-    }
-    nob = 0;
-    while(nob < len)
-        nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
-    a = prepare_attr(len,Seq,TYPE_PUT);
-    c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
-    m = prepare_msg(a,c);
-    send_msg(m);
-    while(!wait_response) {
-        send_msg(m);
-    }
-*/
     Seq = 0;
     while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
         if(len > MAX_DATA_LEN) {
@@ -355,7 +333,7 @@ int jsend_file(FILE *fp,int len) {
     a = prepare_attr(0,Seq,TYPE_END);
     m = prepare_msg(a,s);
     send_msg(m);
-    while(!wait_response) {
+    while(!wait_response()) {
         send_msg(m);
     }
     //Seq = (Seq + 1) % 64; Send_msg increment seq counter
