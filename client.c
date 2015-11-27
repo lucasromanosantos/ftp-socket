@@ -1,4 +1,9 @@
-void send_string();
+#include "client.h"
+#include "utils.h"
+#include "message.h"
+#include "rawsocket.h"
+#include "dir.h"
+#include "files.h"
 
 void operate_client() { //
     FILE *fp;
@@ -28,7 +33,7 @@ void operate_client() { //
                 while(req_ls(args) == 0);
                 //puts("(operate_client) Listening to ls...");
                 printf("LS com janelas. \n");
-                jlisten_ls();
+                listen_ls();
                 puts("(operate_client) Rls was succesfull!\n\n");
             } else if(*comm == 4) {
                 //puts("(operate_client) Sending cd request.");
@@ -224,58 +229,6 @@ Message* wait_data() {
     }
 }
 
-
-int jlisten_ls() {
-    Message *m;
-    unsigned char *c;
-    int size = 0;
-    Seq = 0;
-    c = malloc(10000); // !!!!!!
-
-    m = malloc_msg(MAX_DATA_LEN);
-    m = wait_data();
-    printf(" VER VER VER Primeira mensagem::: \n"); // temp
-    print_message(m);
-    Seq += 1;
-    c[0] = '\0'; // Initializing an empty string.
-
-    while (m->attr.type != TYPE_END) {
-        printf("Seq atual: %d \n", Seq);
-        if(m->attr.type == TYPE_ERROR) {
-            puts("\t(listen_ls) Problem receiving message. Type_nack sent");
-            send_type(TYPE_NACK);
-            Seq -= 1;
-        } else if (m->attr.type == TYPE_SHOWSCREEN) {
-           // if(m->attr.seq >= Seq) {
-                size += (int) m->attr.len;
-                //printf("(listen_ls) Size of message type showscreen: %d \n", size);
-                c = realloc(c,sizeof(char) * (size + 1));
-                strncat(c, m->data, m->attr.len);
-
-                if ( (Seq % 4) == 0 && Seq != 0) {
-                    printf("\t Sending ACK after 4 messages (full window) \n");
-                    send_type(TYPE_ACK);
-                }
-           // } else {
-           //     printf("=> Got message with old sequence. Probaly because of previous nack\n");
-           // }
-        }
-        else {
-            printf("(listen_ls) Can not handle this message.");
-        }
-        free(m); // m will be allocated again in wait_data. - Might bug something.
-        m = wait_data();
-        print_message(m);
-        Seq += 1;
-    }
-    printf("\tGot type_end. Sending ack");
-    send_type(TYPE_ACK); // Sending an ack to TYPE_END message.
-    print_ls(c);
-    free(c);
-    free(m);
-    return 1;
-}
-
 int jsend_file(FILE *fp,int len) {
     int nob = 0,i;
     unsigned char *c;
@@ -377,22 +330,3 @@ int listen_ls() {
     free(m);
     return 1;
 }
-
-
-/*
-void send_string() {
-    unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL)
-        error("(send_string) Unable to allocate memory.");
-    buffer = fgets(buffer, BUF_SIZE, stdin);
-    buffer[strlen(buffer)-1] = '\0'; // Removing the \n
-    Message *m;
-    Attr attrs = prepare_attr(strlen(buffer),Seq,TYPE_FILESIZE);
-    m = malloc_msg(attrs.len + 5);
-    m = prepare_msg(attrs, buffer);
-    send_msg(m);
-    free(buffer);
-    free(m);
-    return ;
-}
-*/

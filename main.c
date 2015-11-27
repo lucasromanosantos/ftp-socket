@@ -1,8 +1,11 @@
 #include "header.h"
-#include "message.c"
-#include "rawsocket.c"
-#include "server.c"
-#include "client.c"
+#include "message.h"
+#include "dir.h"
+#include "files.h"
+#include "client.h"
+#include "server.h"
+#include "utils.h"
+#include "rawsocket.h"
 
 int main(int argc, char *argv[]) {
     if(argc != 2) {

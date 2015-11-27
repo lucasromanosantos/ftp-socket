@@ -1,7 +1,120 @@
-#include "files.c"
-#include "dir.c"
+#include "server.h"
 
-void jreceive_file(FILE *fp);
+void jjsend_ls(char *args) { //
+    char *result = malloc(1024);
+    unsigned char *buffer;
+    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
+        puts("(send_ls) Unable to allocate memory");
+        return;
+    }
+    strcpy(result, ls(LocalPath,args));
+    size_t nob = strlen(result); // nob = number of bytes
+    printf("(send_ls) Size of total nob: %d \n", (int) nob);
+
+/*
+
+    Seq = 0;
+    while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
+        if(len > MAX_DATA_LEN) {
+            //len -= MAX_DATA_LEN;
+            nob = 0;
+            while(nob < MAX_DATA_LEN)
+                nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
+            a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
+            m = prepare_msg(a,c);
+            send_msg(m);
+            if((Seq % 3) == 2) { // I sent 4 messages. Were they ok?
+                if(wait_response()) { // Yes! I got an ack.
+                    Seq += 1;
+                    puts("Got ack. 4 Messages were sent succesfully");
+                } else {
+                    Seq -= 3;
+                    fseek(fp, -1 * (MAX_DATA_LEN * 3), SEEK_CUR);
+                    len += MAX_DATA_LEN * 3;
+                }
+            }
+            len -= MAX_DATA_LEN;
+        }
+*/
+    Message *m;
+    m = malloc_msg(MAX_DATA_LEN);
+    Attr attrs;
+    char tmp[64];
+    while(nob > 0) {
+        printf("nob atual: %d \n", (int)nob);
+        if(nob > MAX_DATA_LEN) {
+            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
+            strncpy(tmp, result, MAX_DATA_LEN);
+            m = prepare_msg(attrs, tmp);
+            send_msg(m);
+            if((Seq % 3) == 2) { // I sent 4 messages. Were they OK?
+                if(wait_response()) { // Yes! I got an ack.
+                    //result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
+                    //nob -= MAX_DATA_LEN;
+                } else {
+                    Seq -= 3;
+                    result -= MAX_DATA_LEN * 4; // 4 cause i add after
+                    nob += MAX_DATA_LEN * 4; // cause I subtract one after
+                }
+            }
+            result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
+            nob -= MAX_DATA_LEN;
+            /*
+            if(!wait_response()) {
+                send_type(TYPE_ERROR);
+                break;
+            }*/
+/*
+        else {
+            nob = 0;
+            while(nob < len)
+                nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
+            a = prepare_attr(len,Seq,TYPE_PUT);
+            c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
+            m = prepare_msg(a,c);
+            send_msg(m);
+
+            if(wait_response()) {
+                puts("Got last message ack. 4 Messages were sent succesfully");
+                len = 0;
+            } else {
+                Seq -= 3;
+                fseek(fp, -1 * (MAX_DATA_LEN * (Seq - m->attr.seq) + len) , SEEK_CUR);
+                len += MAX_DATA_LEN * (Seq - m->attr.seq) + len;
+            }
+
+        }
+    }
+*/
+        } else {
+            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
+            strncpy(tmp, result, nob);
+            tmp[nob] = '\0';
+            printf("\nULTIMA STRING SENDO ENVIADA: %s \n", tmp);
+            m = prepare_msg(attrs, tmp);
+            send_msg(m);
+    
+            if(wait_response()) {
+                //send_type(TYPE_END);
+                nob = 0;
+            } else {
+                //send_type(TYPE_ERROR);
+                Seq -= 3;
+                result -= MAX_DATA_LEN * (Seq - m->attr.seq);
+                nob += MAX_DATA_LEN * (Seq - m->attr.seq);
+            }
+        }
+    }
+
+    unsigned char s[0];
+    attrs = prepare_attr(0,Seq,TYPE_END);
+    m = prepare_msg(attrs,s);
+    send_msg(m);
+    while(!wait_response()) {
+        send_msg(m);
+    }
+}
+
 
 void jsend_ls(char *args) { //
     char *result = malloc(1024);
@@ -208,7 +321,7 @@ void operate_server() {
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     //printf("data dentro da mensagem: %s \n", m->data);
                     printf("Enviando LS com janelas. \n");
-                    jsend_ls(m->data);
+                    jjsend_ls(m->data);
                     puts("\t(operate_server) Ls was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
                     puts("\t(operate_server) Received Cd. Ack sent.");
@@ -307,114 +420,4 @@ void jreceive_file(FILE *fp) {
     }
     fclose(fp);
     return ;
-}
-
-void jjsend_ls(char *args) { //
-    char *result = malloc(1024);
-    unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("(send_ls) Unable to allocate memory");
-        return;
-    }
-    strcpy(result, ls(LocalPath,args));
-    size_t nob = strlen(result); // nob = number of bytes
-    printf("(send_ls) Size of total nob: %d \n", (int) nob);
-
-/*
-
-    Seq = 0;
-    while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
-        if(len > MAX_DATA_LEN) {
-            //len -= MAX_DATA_LEN;
-            nob = 0;
-            while(nob < MAX_DATA_LEN)
-                nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
-            a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
-            m = prepare_msg(a,c);
-            send_msg(m);
-            if((Seq % 3) == 2) { // I sent 4 messages. Were they ok?
-                if(wait_response()) { // Yes! I got an ack.
-                    Seq += 1;
-                    puts("Got ack. 4 Messages were sent succesfully");
-                } else {
-                    Seq -= 3;
-                    fseek(fp, -1 * (MAX_DATA_LEN * 3), SEEK_CUR);
-                    len += MAX_DATA_LEN * 3;
-                }
-            }
-            len -= MAX_DATA_LEN;
-        }
-*/
-    Message *m;
-    m = malloc_msg(MAX_DATA_LEN);
-    Attr attrs;
-    char tmp[64];
-    while(nob > 0) {
-        if(nob > MAX_DATA_LEN) {
-            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
-            strncpy(tmp, result, MAX_DATA_LEN);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-            if((Seq % 3) == 2) { // I sent 4 messages. Were they OK?
-                if(wait_response()) { // Yes! I got an ack.
-                    result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
-                    nob -= MAX_DATA_LEN;
-                } else {
-                    Seq -= 3;
-                    result -= MAX_DATA_LEN * 3;
-                    len += MAX_DATA_LEN * 3;
-                }
-            }
-            /*
-            if(!wait_response()) {
-                send_type(TYPE_ERROR);
-                break;
-            }*/
-/*
-        else {
-            nob = 0;
-            while(nob < len)
-                nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
-            a = prepare_attr(len,Seq,TYPE_PUT);
-            c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
-            m = prepare_msg(a,c);
-            send_msg(m);
-
-            if(wait_response()) {
-                puts("Got last message ack. 4 Messages were sent succesfully");
-                len = 0;
-            } else {
-                Seq -= 3;
-                fseek(fp, -1 * (MAX_DATA_LEN * (Seq - m->attr.seq) + len) , SEEK_CUR);
-                len += MAX_DATA_LEN * (Seq - m->attr.seq) + len;
-            }
-
-        }
-    }
-*/
-        } else {
-            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
-            strncpy(tmp, result, nob);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-
-            if(wait_response()) {
-                //send_type(TYPE_END);
-                nob = 0;
-            } else {
-                //send_type(TYPE_ERROR);
-                Seq -= 3;
-                result -= MAX_DATA_LEN * (Seq - m->attr.seq);
-                len += MAX_DATA_LEN * (Seq - m->attr.seq);
-            }
-        }
-    }
-
-    unsigned char s[0];
-    a = prepare_attr(0,Seq,TYPE_END);
-    m = prepare_msg(a,s);
-    send_msg(m);
-    while(!wait_response()) {
-        send_msg(m);
-    }
 }

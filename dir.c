@@ -1,10 +1,5 @@
-int count_slashes(unsigned char* c, int len);
-void print_matrix(unsigned char** c,int n);
-unsigned char** to_matrix(unsigned char *c, int n);
-unsigned char* to_vector(unsigned char **c, int n);
-unsigned char* fix_dir(unsigned char *c, int length);
-int check_cd(unsigned char* c);
-char* ls(char* path, char* args);
+#include "header.h"
+#include "dir.h"
 
 int count_slashes(unsigned char* c, int len) {
     int i,count=0;

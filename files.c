@@ -1,10 +1,6 @@
-unsigned int get_file_size(FILE *fp);
-int send_file(FILE *fp,int len);
-int send_filesize(FILE *fp);
-FILE* open_file();
-unsigned char* read_file(FILE *fp,unsigned int size);
-void write_file(FILE *fp,unsigned char *c,int size);
-void receive_file(FILE *fp);
+#include "files.h"
+#include "utils.h"
+#include "message.h"
 
 unsigned int get_file_size(FILE *fp) {
     int sz = 0;

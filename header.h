@@ -1,3 +1,5 @@
+#ifndef _HEADER_
+#define _HEADER_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +22,16 @@
 #include <linux/if_packet.h>
 #include <linux/if.h>
 #include <sys/poll.h>
+
+/*
+#include "utils.h"
+#include "message.h"
+#include "rawsocket.h"
+#include "dir.h"
+#include "files.h"
+#include "client.h"
+#include "server.h"
+*/
 
 #define DEVICE "eth0"
 #define BUF_SIZE 64
@@ -50,6 +62,9 @@
 #define FILE_LEN 256
 #define NUM_FILE 32
 
+char *User,*LocalPath,*RemPath;
+int IsClient, Seq, Socket;
+
 typedef struct Attr {
 	unsigned short len : 6,
      	  		   seq : 6,
@@ -63,5 +78,4 @@ typedef struct Message {
     unsigned char par : 8;
 } Message;
 
-char *User,*LocalPath,*RemPath;
-int IsClient, Seq, Socket;
+#endif
