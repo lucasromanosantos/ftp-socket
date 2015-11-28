@@ -67,7 +67,6 @@ void operate_client() { //
             } else {
                 if(*comm != 7)
                     puts("(operate_client) Invalid option. Please, type another number.");
-                args = show_interface(comm,args,buf);
             }
         }
     }

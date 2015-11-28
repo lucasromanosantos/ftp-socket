@@ -15,4 +15,4 @@ main: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS)
 
 clean:
-	rm -rf *.o
+	rm -rf *.o *.~ *.swp core

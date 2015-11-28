@@ -29,19 +29,19 @@ int receive(unsigned char *data, Message **m, int timeout) {
             }
             Attr a;
             memcpy(&a,data+1,2);
-            
+
             *m = str_to_msg(data);/*
             char par = get_parity(*m);
             if(par != (*m)->par) {
                 send_type(TYPE_NACK);
                 return 0;
             }
-            if(Seq + 1 != (*m)->attr.seq) { isto acho que n vai ter 
+            if(Seq + 1 != (*m)->attr.seq) { isto acho que n vai ter
                 send_type(TYPE_NACK);
                 printf("seq fucked");
                 return 0;
             }
-            Seq = (Seq + 1) % 64; 
+            Seq = (Seq + 1) % 64;
             printf("(receive) Got this message(%d):",a.len);
             print_message(*m); */
             return 1; // Success
@@ -185,6 +185,7 @@ int send_msg(Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
+    char *aux = s;
     printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
     print_message(m);
     // Actually send the message.
@@ -199,8 +200,9 @@ int send_msg(Message *m) {
         s += n;
         length -= n;
     }
+    free(aux);
     //free(s);
-    if(n <= 0)
+    //if(n <= 0)
        //Seq = (Seq + 1) % 64;
     return (n <= 0) ? - 1 : 0;
 }
