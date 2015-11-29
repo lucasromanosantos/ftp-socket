@@ -44,13 +44,13 @@ void operate_client() { //
                 buf = strcpy(buf,LocalPath);
                 buf = strcat(buf,args);
                 if((fp = fopen(buf,"r")) == NULL) {
-                    puts("(operate_client) File does not exist.");
+                    printf("(operate_client) File does not exist. Error was: %s\n",strerror(errno));
                 } else {
                     while(req_put(args) == 0);
                     length = send_filesize(fp);
-                    if(jsend_file(fp,length) != 1)
+                    if(send_file(fp,length) != 1)
                         puts("(operate_client) Could not send file.");
-                    puts("(operate_client) Put was succesfull!\n\n");
+                    puts("(operate_client) Put was succesfull!");
                 }
             } else if(*comm == 6) {
                 //puts("(operate_client) Sending get request.");
@@ -58,11 +58,11 @@ void operate_client() { //
                 addr = strcpy(addr,LocalPath); // Concatenating file name.
                 addr = strcat(addr,args);   // Concatenating file name.
                 if((fp = fopen(addr,"w")) == NULL) {
-                    puts("(operate_server) Could not create a new file.");
+                    printf("(operate_server) Could not create a new file. Error was: %s\n",strerror(errno));
                     exit(1);
                 } else {
                     receive_file(fp);
-                    puts("(operate_client) Get was succesfull!\n\n");
+                    puts("(operate_client) Get was succesfull!");
                 }
             } else {
                 if(*comm != 7)
@@ -228,7 +228,7 @@ Message* wait_data() {
     }
 }
 
-int jsend_file(FILE *fp,int len) {
+int send_file(FILE *fp,int len) {
     int nob = 0,i;
     unsigned char *c;
     Message *m;
