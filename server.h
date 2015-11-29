@@ -5,7 +5,6 @@
 #include "dir.h"
 #include "files.h"
 
-void jreceive_file(FILE *fp);
+void receive_file(FILE *fp);
 void send_ls(char *args);
 void operate_server();
-void jreceive_file(FILE *fp);

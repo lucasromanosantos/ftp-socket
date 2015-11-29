@@ -1,6 +1,6 @@
 #include "server.h"
 
-void jjsend_ls(char *args) { //
+void send_ls(char *args) { //
     char *result = malloc(1024);
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
@@ -11,47 +11,19 @@ void jjsend_ls(char *args) { //
     size_t nob = strlen(result); // nob = number of bytes
     printf("(send_ls) Size of total nob: %d \n", (int) nob);
 
-/*
-
-    Seq = 0;
-    while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
-        if(len > MAX_DATA_LEN) {
-            //len -= MAX_DATA_LEN;
-            nob = 0;
-            while(nob < MAX_DATA_LEN)
-                nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
-            a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
-            m = prepare_msg(a,c);
-            send_msg(m);
-            if((Seq % 3) == 2) { // I sent 4 messages. Were they ok?
-                if(wait_response()) { // Yes! I got an ack.
-                    Seq += 1;
-                    puts("Got ack. 4 Messages were sent succesfully");
-                } else {
-                    Seq -= 3;
-                    fseek(fp, -1 * (MAX_DATA_LEN * 3), SEEK_CUR);
-                    len += MAX_DATA_LEN * 3;
-                }
-            }
-            len -= MAX_DATA_LEN;
-        }
-*/
     Message *m;
     m = malloc_msg(MAX_DATA_LEN);
     Attr attrs;
     char tmp[64];
     while(nob > 0) {
-        printf("nob atual: %d \n", (int)nob);
+        //printf("nob atual: %d \n", (int)nob);
         if(nob > MAX_DATA_LEN) {
             attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
             strncpy(tmp, result, MAX_DATA_LEN);
             m = prepare_msg(attrs, tmp);
             send_msg(m);
             if((Seq % 3) == 2) { // I sent 4 messages. Were they OK?
-                if(wait_response()) { // Yes! I got an ack.
-                    //result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
-                    //nob -= MAX_DATA_LEN;
-                } else {
+                if(!wait_response()) { // Got an nack.
                     Seq -= 3;
                     result -= MAX_DATA_LEN * 4; // 4 cause i add after
                     nob += MAX_DATA_LEN * 4; // cause I subtract one after
@@ -59,33 +31,6 @@ void jjsend_ls(char *args) { //
             }
             result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
             nob -= MAX_DATA_LEN;
-            /*
-            if(!wait_response()) {
-                send_type(TYPE_ERROR);
-                break;
-            }*/
-/*
-        else {
-            nob = 0;
-            while(nob < len)
-                nob += fread(c + nob,1,MAX_DATA_LEN - nob,fp);
-            a = prepare_attr(len,Seq,TYPE_PUT);
-            c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
-            m = prepare_msg(a,c);
-            send_msg(m);
-
-            if(wait_response()) {
-                puts("Got last message ack. 4 Messages were sent succesfully");
-                len = 0;
-            } else {
-                Seq -= 3;
-                fseek(fp, -1 * (MAX_DATA_LEN * (Seq - m->attr.seq) + len) , SEEK_CUR);
-                len += MAX_DATA_LEN * (Seq - m->attr.seq) + len;
-            }
-
-        }
-    }
-*/
         } else {
             attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             strncpy(tmp, result, nob);
@@ -112,179 +57,6 @@ void jjsend_ls(char *args) { //
     send_msg(m);
     while(!wait_response()) {
         send_msg(m);
-    }
-}
-
-
-void jsend_ls(char *args) { //
-    char *result = malloc(1024);
-    unsigned char *buffer;
-    strcpy(result, ls(LocalPath,args));
-    size_t nob = strlen(result); // nob = number of bytes
-    printf("(send_ls) Size of total nob: %d \n", (int) nob);
-
-    Message *m;
-    Attr attrs;
-    char *aux;
-    int sendIndex = 0; // Indice da mensagem que estamos enviando.
-    int createIndex = 0; // Indice da mensagem que estamos criando.
-    int count = 0; // Recebi um erro. Quantas mensagens tenho que voltar? GO BACK
-
-    m = malloc_msg(MAX_DATA_LEN);
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("(send_ls) Unable to allocate memory");
-        return;
-    }
-
-    Seq = 0;
-    count = 0;
-
-    // I have to initialize first message
-    while(nob > 0) {
-        printf("\n ======================== \n ");
-        printf("seq: %d \n", Seq);
-        if(nob >= MAX_DATA_LEN) {
-            char tmp[64];
-            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
-            strncpy(tmp, result, MAX_DATA_LEN);
-            m = prepare_msg(attrs, tmp);
-
-            send_msg(m);
-            Seq += 1; // Increase. Maybe just inside first if?
-            result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
-            nob -= MAX_DATA_LEN;
-            if((Seq % 4) == 0 && Seq != 0) {
-                if(wait_response()) {
-                    printf("\tGot 4th message ACK! \n");
-                    //send_msg(m);
-                    //Seq += 1; // Increase. Maybe just inside first if?
-                    //result += MAX_DATA_LEN; // Add MAX_DATA_LEN bytes to result pointer
-                    //nob -= MAX_DATA_LEN;
-                } else { // Check if there's ACK from client. If not, try to send the entire window again
-                    printf("\tFailed to receive 4th message ACK. Going back: i = 0 \n"); 
-                    result -= MAX_DATA_LEN * 4; // Go back (4 + 1) times because we add MAX_DATA_LEN again always
-                    nob  += MAX_DATA_LEN * 4;
-                    Seq -= 4;
-                }
-            }
-
-            if(receive(aux,&(m),1) != 0) { // Check if I got a message for 1ms. If I did not, continue sending messages.
-                if(m->attr.type == TYPE_NACK) { // The first char has the number (Seq) of the message that had an error.
-                    // Got a nack. I have to get which message (m) had an error, and send every message since m.
-                    int seq_nack = m->attr.seq;
-                    int goback = Seq - seq_nack; //number of times I have to go back
-                    result -= MAX_DATA_LEN * goback; // Result pointer go back
-                    nob += MAX_DATA_LEN * goback;
-
-                    Seq -= goback;
-                    printf("\tGot nack from client. Resending the last %d messages. new seq = %d, seq from nack = %d \n", goback, Seq, m->attr.seq);
-                } else if(m->attr.type == TYPE_ACK) {
-                    puts("FUCK YOU!");
-                }
-            }
-        } else {
-            char tmp[nob + 1];
-            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
-            //m = malloc_msg(attrs.len);
-            strncpy(tmp, result, nob);
-            m = prepare_msg(attrs, tmp);
-
-            send_msg(m);
-            if(wait_response()) { // Received an ack.
-                nob = 0;
-                Seq += 1;
-            } else { // Go back 3 messages. nob += 63*4, we did not update nob yet.
-                nob += MAX_DATA_LEN * 3;
-                result -= MAX_DATA_LEN * 3;
-                //int goback = Seq - seq_nack; //number of times I have to go back
-                //Seq -= seq_nack;
-                Seq -= 3;
-            }
-/*
-            if ((Seq % 4) != 0) { // Get window position - is it the 4th one?
-                send_msg(m); // It was not. Send message and increment seq.
-                    Seq += 1; // Increase. Maybe just inside first if?
-            } else { // It was the 4th message, wait for an ack and return.
-                if(wait_response()) {
-                    send_msg(m);
-                    Seq += 1; // Increase. Maybe just inside first if?
-                    printf("\t(last message) Got 4th message ACK! \n");
-                } else { // Check if there's ACK from client. If not, try to send the entire window again
-                    printf("\t(last message) Failed to receive 4th message ACK. Going back: i = 0 \n"); 
-                    result -= MAX_DATA_LEN * 3 + nob; // Go back only 4 times (3 max len + last message) because we DONT add MAX_DATA_LEN as before
-                    nob  += MAX_DATA_LEN * 3;
-                    Seq -= 4;
-                }
-            }
-
-            if(receive(aux, &(m), 1) != 0) {
-                if(m->attr.type == TYPE_NACK) {
-                    int seq_nack = m->attr.seq;
-                    result -= nob + (goback - 1) * MAX_DATA_LEN; // Result pointer go back
-                    nob += nob + (goback - 1) * MAX_DATA_LEN;
-
-                    Seq -= goback;
-                    printf("\t(last message) Got nack from client. Resending the last %d messages. new seq = %d, seq from nack = %d \n", goback, Seq, m->attr.seq);
-                }
-            }
-*/
-            send_type(TYPE_END); //Send message TYPE_END
-            while(wait_response()) {
-                send_type(TYPE_END);
-                sleep(1); // temporary. sleep 1 second
-            }
-            nob = 0;
-        }
-    }
-}
-
-
-void send_ls(char *args) { //
-    char *result = malloc(1024);
-    unsigned char *buffer;
-    if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
-        puts("(send_ls) Unable to allocate memory");
-        return;
-    }
-    strcpy(result, ls(LocalPath,args));
-    size_t nob = strlen(result); // nob = number of bytes
-    printf("(send_ls) Size of total nob: %d \n", (int) nob);
-
-    Message *m;
-    m = malloc_msg(MAX_DATA_LEN);
-    Attr attrs;
-    while(nob > 0) {
-        if(nob >= MAX_DATA_LEN) {
-            char tmp[64];
-            attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
-            strncpy(tmp, result, MAX_DATA_LEN);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-            result += MAX_DATA_LEN; // add MAX_DATA_LEN bytes to result pointer
-            nob -= MAX_DATA_LEN;
-            if(!wait_response()) {
-                send_type(TYPE_ERROR);
-                break;
-            }
-        } else {
-            char tmp[nob + 1];
-            attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
-            m = malloc_msg(attrs.len);
-            strncpy(tmp, result, nob);
-            m = prepare_msg(attrs, tmp);
-            send_msg(m);
-            nob = 0;
-            if(wait_response()) {
-                send_type(TYPE_END);
-            } else {
-                send_type(TYPE_ERROR);
-            }
-        }
-    }
-    if(wait_response()) {
-        puts("Ls completed succesfully. Returning..."); // We should delete this message after LS work properly.
-    } else {
-        send_type(TYPE_ERROR);
     }
 }
 
@@ -321,7 +93,7 @@ void operate_server() {
                     puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
                     //printf("data dentro da mensagem: %s \n", m->data);
                     printf("Enviando LS com janelas. \n");
-                    jjsend_ls(m->data);
+                    send_ls(m->data);
                     puts("\t(operate_server) Ls was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
                     puts("\t(operate_server) Received Cd. Ack sent.");
@@ -338,17 +110,17 @@ void operate_server() {
                     strcpy(addr,LocalPath); // Concatenating file name.
                     strcat(addr,m->data);   // Concatenating file name.
                     if((fp = fopen(addr,"w")) == NULL) {
-                        puts("Could not create a new file.");
+                        printf("Could not create a new file. Error was: %s\n",strerror(errno));
                         exit(1);
                     }
-                    jreceive_file(fp);
+                    receive_file(fp);
                     puts("(operate_server) Put was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
                     addr = strcpy(addr,LocalPath);
                     strcat(addr,m->data);
                     if((fp = fopen(addr,"r")) == NULL) {
-                        puts("(operate_server) File does not exist.");
+                        printf("(operate_server) File does not exist. Error was: %s\n",strerror(errno));
                     } else {
                         length = send_filesize(fp);
                         if(send_file(fp,length) != 1)
@@ -361,8 +133,7 @@ void operate_server() {
     }
 }
 
-
-void jreceive_file(FILE *fp) {
+void receive_file(FILE *fp) {
     int res = 0;
     Message *m;
     unsigned char *buf,par;
@@ -416,8 +187,10 @@ void jreceive_file(FILE *fp) {
     if(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
         // This should be a while, sending nack and waiting for the right message.
         puts("(receive_file) Parity error or message wasnt an end.");
+        print_message(m2);
         return ;
     }
+    send_type(TYPE_ACK);
     fclose(fp);
     return ;
 }
