@@ -230,6 +230,7 @@ Message* wait_data() {
 
 int send_file(FILE *fp,int len) {
     int nob = 0,i;
+    int size, perc, totalLen, dataSent, completed = 0, valueChange = 1;
     unsigned char *c;
     Message *m;
     Attr a;
@@ -238,21 +239,55 @@ int send_file(FILE *fp,int len) {
     if((c = malloc(sizeof(char) * 64)) == NULL)
         error("(send_file) Unable to allocate memory.");
 
+    if(len < 10000) { // small size
+        size = 0; // 0 means small size, 1 means medium size, 2 means big file.
+        perc = 0;
+    } else if(len >= 10000 && len <= 1000000) { // medium size
+        size = 1;
+        perc = len / 10; // Show on screen every 10% completed.
+    } else {
+        size = 2;
+        perc = len / 100; // Calculate 1% from file_size to show percentage on screen.
+    }
+
     Seq = 0;
+    totalLen = len;
     while(len > 0) { // Send n messages until the remaining data is less than 63 bytes (until I need only one message).
         if(len > MAX_DATA_LEN) {
-            //len -= MAX_DATA_LEN;
             nob = 0;
             while(nob < MAX_DATA_LEN)
                 nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
             a = prepare_attr(MAX_DATA_LEN,Seq,TYPE_PUT);
             m = prepare_msg(a,c);
             send_msg(m);
+            Seq += 1;
+
+            dataSent = totalLen - len;
+            if(size > 0) {
+                if(dataSent > completed * perc/10 && size == 1) {
+                    completed += 10;
+                    valueChange = 1;
+                } else if(dataSent > completed * perc && size == 2) {
+                    completed += 1;
+                    valueChange = 1;
+                }
+                if(valueChange) {
+                    system("clear");
+                    printf("Sending file...\n+------------+\n| ");
+                    for(i=0; i < completed-9; i+=10) {
+                        printf("X");
+                    }
+                    for(i=completed; i<100; i+=10) {
+                        printf(" ");
+                    }
+                    puts(" |\n+------------+\n");
+                    printf("%d%% sent.\n\n\n",completed);
+                    valueChange = 0;
+                }
+            }
+
             if((Seq % 3) == 2) { // I sent 4 messages. Were they ok?
-                if(wait_response()) { // Yes! I got an ack.
-                    Seq += 1;
-                    puts("Got ack. 4 Messages were sent succesfully");
-                } else {
+                if(!wait_response()) { // Got an nack.
                     Seq -= 3;
                     fseek(fp, -1 * (MAX_DATA_LEN * 3), SEEK_CUR);
                     len += MAX_DATA_LEN * 3;
@@ -267,9 +302,9 @@ int send_file(FILE *fp,int len) {
             c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
             m = prepare_msg(a,c);
             send_msg(m);
-
+            Seq += 1;
             if(wait_response()) {
-                puts("Got last message ack. 4 Messages were sent succesfully");
+                //puts("Got last message ack. 4 Messages were sent succesfully");
                 len = 0;
             } else {
                 Seq -= 3;
@@ -279,8 +314,7 @@ int send_file(FILE *fp,int len) {
 
         }
     }
-    puts("Gonna send type_end.");
-    //Seq = (Seq + 1) % 64; Send_msg increment seq counter
+    //puts("Gonna send type_end.");
     unsigned char s[0];
     a = prepare_attr(0,Seq,TYPE_END);
     m = prepare_msg(a,s);
@@ -288,7 +322,6 @@ int send_file(FILE *fp,int len) {
     while(!wait_response()) {
         send_msg(m);
     }
-    //Seq = (Seq + 1) % 64; Send_msg increment seq counter
     free(c);
     free(m);
     return 1;
