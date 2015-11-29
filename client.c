@@ -23,7 +23,8 @@ void operate_client() { //
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
             args = show_interface(comm,args,buf);
-            //printf("Comm: %d - Args: '%s'\n",*comm,args);
+            printf("Comm: %d - Args: '%s'\n",*comm,args);
+            puts("Yeah");
             if(*comm == 1) {
                 print_ls(ls(LocalPath,args));
             } else if(*comm == 2) {
@@ -43,6 +44,7 @@ void operate_client() { //
                 //puts("(operate_client) Sending put request.");
                 buf = strcpy(buf,LocalPath);
                 buf = strcat(buf,args);
+                puts(buf);
                 if((fp = fopen(buf,"r")) == NULL) {
                     puts("(operate_client) File does not exist.");
                 } else {
@@ -315,7 +317,8 @@ int jsend_file(FILE *fp,int len) {
         }
     }
     //puts("Gonna send type_end.");
-    unsigned char s[0];
+    unsigned char s[1];
+    s[0] = '\0';
     a = prepare_attr(0,Seq,TYPE_END);
     m = prepare_msg(a,s);
     send_msg(m);
