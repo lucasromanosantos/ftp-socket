@@ -186,8 +186,8 @@ int send_msg(Message *m) {
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
     char *aux = s;
-    printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
-    print_message(m);
+    //printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
+    //print_message(m);
     // Actually send the message.
     while(length > 0) {
         n = send(Socket, s, length, 0);
