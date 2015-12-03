@@ -23,7 +23,8 @@ void operate_client() { //
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
             args = show_interface(comm,args,buf);
-            //printf("Comm: %d - Args: '%s'\n",*comm,args);
+            printf("Comm: %d - Args: '%s'\n",*comm,args);
+            puts("Yeah");
             if(*comm == 1) {
                 print_ls(ls(LocalPath,args));
             } else if(*comm == 2) {
@@ -43,6 +44,7 @@ void operate_client() { //
                 //puts("(operate_client) Sending put request.");
                 buf = strcpy(buf,LocalPath);
                 buf = strcat(buf,args);
+                puts(buf);
                 if((fp = fopen(buf,"r")) == NULL) {
                     printf("(operate_client) File does not exist. Error was: %s\n",strerror(errno));
                 } else {
