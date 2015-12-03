@@ -185,7 +185,8 @@ int send_msg(Message *m) {
     ssize_t n;
     size_t length = msg_length(m) * 8;
     char *s = msg_to_str(m);
-    char *aux = s;
+    char *aux;// = s;
+    aux = s;
     //printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
     //print_message(m);
     // Actually send the message.
@@ -195,7 +196,13 @@ int send_msg(Message *m) {
         //if(n <= 0) break; // Error
         //Seq = (Seq + 1) % 64;
         if(n < 0) {
+            print_message(m);
+            for(i=0; i<m->attr.len; i++) {
+                printf("%c",s[i]);
+            }
+            puts("");
             printf("\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
+            return 0;
         }
         s += n;
         length -= n;

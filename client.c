@@ -261,7 +261,8 @@ int send_file(FILE *fp,int len) {
             m = prepare_msg(a,c);
             send_msg(m);
             Seq += 1;
-
+            printf("Len = %d, mlen = %d, mseq = %d\n",len,(int)m->attr.len, (int)m->attr.seq);
+/*
             dataSent = totalLen - len;
             if(size > 0) {
                 if(dataSent > completed * perc/10 && size == 1) {
@@ -285,7 +286,7 @@ int send_file(FILE *fp,int len) {
                     valueChange = 0;
                 }
             }
-
+*/
             if((Seq % 3) == 2) { // I sent 4 messages. Were they ok?
                 if(!wait_response()) { // Got an nack.
                     Seq -= 3;
@@ -302,6 +303,7 @@ int send_file(FILE *fp,int len) {
             c[len] = '\0'; // Not correctly tested, but this might be a bug in other functions! Watch out!!
             m = prepare_msg(a,c);
             send_msg(m);
+            printf("Len = %d, mlen = %d, mseq = %d\n",len,(int)m->attr.len, (int)m->attr.seq);
             Seq += 1;
             if(wait_response()) {
                 //puts("Got last message ack. 4 Messages were sent succesfully");
@@ -315,7 +317,8 @@ int send_file(FILE *fp,int len) {
         }
     }
     //puts("Gonna send type_end.");
-    unsigned char s[0];
+    unsigned char s[1];
+    s[0] = '\0';
     a = prepare_attr(0,Seq,TYPE_END);
     m = prepare_msg(a,s);
     send_msg(m);
