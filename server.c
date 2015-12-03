@@ -144,6 +144,7 @@ void receive_file(FILE *fp) {
     res = receive(buf, &m, STD_TIMEOUT);
     par = get_parity(m);
     print_message(m);
+
     while(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
         printf("Par: %d, mPar=%d, Type=\n",(int)par,(int)m->par);
         puts("(receive_file) Parity error or message was not the file size.");
@@ -162,6 +163,7 @@ void receive_file(FILE *fp) {
         res = receive(buf, &m, STD_TIMEOUT);
         par = get_parity(m);
         print_message(m);
+        printf("I == %d, Size = %d\n",i,size);
         if((int)par != (int)m->par) {
             puts("(receive_file) Parity error or message.");
             send_type(TYPE_NACK);
@@ -181,7 +183,14 @@ void receive_file(FILE *fp) {
     puts("Going to read the End Message.");
     Message *m2 = malloc_msg(MAX_DATA_LEN);
     // Read all messages, created and updated the file, I should receive a TYPE_END.
-    while((receive(buf, &m2, STD_TIMEOUT)) == 0);
+    while((receive(buf, &m2, STD_TIMEOUT)) == 0); // Got a message.
+    while(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
+        puts("(receive_file) Parity error or message wasnt an end.");
+        print_message(m2);
+        send_type(TYPE_NACK);
+        while((receive(buf, &m2, STD_TIMEOUT)) == 0);
+    }
+    /*while((receive(buf, &m2, STD_TIMEOUT)) == 0);
     par = get_parity(m2);
     print_message(m2);
     if(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
@@ -189,7 +198,7 @@ void receive_file(FILE *fp) {
         puts("(receive_file) Parity error or message wasnt an end.");
         print_message(m2);
         return ;
-    }
+    }*/
     send_type(TYPE_ACK);
     fclose(fp);
     return ;
