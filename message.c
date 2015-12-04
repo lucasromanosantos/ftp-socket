@@ -180,6 +180,21 @@ void send_type(int type) {
     return ;
 }
 
+void send_data_type(int type, int seq) {
+/* Send an empty message with attr->type set to our parameter.
+ * We can use it to send acks, nacks, error and end messages.
+ */
+    Message *m;
+    char *s = malloc(sizeof(int) * sizeof(char));
+    memcpy(s,&seq,4); // Got an nack indicating this message had error.
+    m = malloc_msg(4); // No data in this message, so, its length is 0.
+    Attr attr = prepare_attr(0,Seq,type);
+    m = prepare_msg(attr,s);
+    send_msg(m);
+    free(m);
+    return ;
+}
+
 int send_msg(Message *m) {
     int i,cont = 0;
     ssize_t n;

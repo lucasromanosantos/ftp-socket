@@ -50,7 +50,7 @@ void operate_client() { //
                 } else {
                     while(req_put(args) == 0);
                     length = send_filesize(fp);
-                    if(send_file(fp,length) != 1)
+                    if(send_file2(fp,length) != 1)
                         puts("(operate_client) Could not send file.");
                     puts("(operate_client) Put was succesfull!");
                 }
@@ -63,7 +63,7 @@ void operate_client() { //
                     printf("(operate_server) Could not create a new file. Error was: %s\n",strerror(errno));
                     exit(1);
                 } else {
-                    receive_file(fp);
+                    receive_file2(fp);
                     puts("(operate_client) Get was succesfull!");
                 }
             } else {
@@ -367,3 +367,149 @@ int listen_ls() {
     free(m);
     return 1;
 }
+
+//////////////// Repeticao seletiva
+
+int send_file2(FILE *fp,int len) {
+    int nob = 0, i, j, window = 3, mp = 0, remaining; // mp is message pointer, it counts which message is in turn.
+    int size, perc, totalLen = len, dataSent, completed = 0, valueChange = 1, seqGot, msgWaitAns = 0;
+    unsigned char *c;
+    Message **m, *aux;
+    Attr a;
+
+    if((m = malloc(window * sizeof(Message *))) == NULL) {
+        error("(send_file) Unable to allocate memory.");
+    }
+
+    for(i = 0; i < window; ++i) {
+        m[i] = malloc_msg(MAX_DATA_LEN);
+    }
+
+    if((c = malloc(sizeof(char) * 64)) == NULL) {
+        error("(send_file) Unable to allocate memory.");
+    }
+
+    aux = malloc_msg(MAX_DATA_LEN);
+/*
+    if(len < 10000) { // small size
+        size = 0; // 0 means small size, 1 means medium size, 2 means big file.
+        perc = 0;
+    } else if(len >= 10000 && len <= 1000000) { // medium size
+        size = 1;
+        perc = len / 10; // Show on screen every 10% completed.
+    } else {
+        size = 2;
+        perc = len / 100; // Calculate 1% from file_size to show percentage on screen.
+    }
+*/
+    Seq = 0;
+
+    while(len > 0) {
+        nob = 0;
+        remaining = (len > MAX_DATA_LEN) ? MAX_DATA_LEN : len;
+        while(nob < remaining)
+            nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
+        a = prepare_attr(remaining, Seq, TYPE_PUT);
+        m[mp] = prepare_msg(a, c);
+        send_msg(m[mp]);
+        mp = (mp + 1) % window;
+        msgWaitAns++;
+        Seq += 1;
+
+        while(msgWaitAns >= window) {
+            if(!wait_response(aux)) { // Got an nack.
+                memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
+                for(i = 0; i < window; ++i) {
+                    if(m[(mp + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
+                        send_msg(m[(mp + i) % window]);
+                        break ; // Send message, wait for a response.
+                    } else {
+                        msgWaitAns--; // This was OK. I can send another one.
+                    }
+                }
+            } else { // Got an ack after sending 3 messages.
+                memcpy(&seqGot,aux->data,4); // Got an ack indicating this message and those before it were OK.
+                for(i = 0, j = 0; i < window; ++i) {
+                    msgWaitAns--;
+                    if(seqGot == m[mp+i % window]->attr.seq) { // Look at bottom for proper comments explaining this.
+                        break ;
+                    }
+                    if(i >= window) { // Received a message with a Seq that was not from any message I sent!
+                        puts("(Send_file2) Panic!!");
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    //puts("Gonna send type_end.");
+    unsigned char s[1];
+    s[0] = '\0';
+    a = prepare_attr(0,Seq,TYPE_END);
+    m[0] = prepare_msg(a,s);
+    send_msg(m[0]);
+    while(!wait_response()) {
+        send_msg(m[0]);
+    }
+    free(c);
+    free(m); // To do this free, do we have to do a for?
+    free(aux);
+    return 1;
+}
+
+
+int wait_response_seq(Message *m) { // necessitamos // function that returns 0 if nack or 1 if ack
+    unsigned char *buffer;
+    time_t seconds = 3,endwait;
+    int i, size;
+
+    endwait = time(NULL) + seconds;
+    if((buffer = malloc(1024)) == NULL)
+        return 0;
+
+    while(time(NULL) < endwait && i != 1)
+        i = receive(buffer, &m, STD_TIMEOUT);
+
+    if(i == 1) {
+        if(m->attr.type == TYPE_ACK) { // Got ack
+            free(buffer);
+            return 1;
+        } else if(m->attr.type == TYPE_NACK) {
+            free(buffer);
+            return 0;
+        } else if(m->attr.type == TYPE_ERROR) {
+            free(buffer);
+            return -1;
+        } else {
+            free(buffer);
+            return -2;
+        }
+    } else {
+        puts("(wait_response) Error! Timeout? \n");
+        free(buffer);
+        return -3;
+    }
+}
+
+
+/*
+mp = 0.
+Prepare message 5 and send it. mp = 1.
+Prepare message 6 and send it. mp = 2.
+Prepare message 7 and send it. mp = 0.
+I sent messages 5, 6 and 7.
+Got an ACK from message 7.
+My mp was pointing to 0.
+So, if I check my messages 5, 6 and 7 (for i=0; i<3; i++) m[mp+i %3], the one which m[]->Seq == seqGot is the one I got an ack.
+So, for everyone DIFFERENT, I can know it was OK.
+
+For example, my ACK was from message 7. So, I check if message 5 has the same Seq. No. It means message 5 was ok. I can send another msg (8).
+Same to message 6. Its different. So, its ok. I can send another message (9). Message 7 is the right one. So, I can send another one (10).
+It means I sent 8, 9 and 10. Go into the loop again.
+
+If I sent 5, 6 and 7 and got ACK from message 6. I check if message 5 has the same Seq. No. It means message 5 was ok. I can send another msg (8).
+Message 6 is the right one. So, I can send another one (9). So, I already sent 7, 8 and 9. Go into that loop again.
+
+If I sent 5, 6 and 7 and got ACK from message 5. Message 5 is the right one. So, I can send another one (8).
+So, I already sent 6, 7 and 8. Go into that loop again.
+*/
