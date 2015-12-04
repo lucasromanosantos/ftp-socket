@@ -371,7 +371,7 @@ int listen_ls() {
 //////////////// Repeticao seletiva
 
 int send_file2(FILE *fp,int len) {
-    int nob = 0, i, j, window = 3, mp = 0, remaining; // mp is message pointer, it counts which message is in turn.
+    int nob = 0, i, j, window = 3, mc = 0, remaining; // mc is message pointer, it counts which message is in turn.
     int size, perc, totalLen = len, dataSent, completed = 0, valueChange = 1, seqGot, msgWaitAns = 0;
     unsigned char *c;
     Message **m, *aux;
@@ -390,18 +390,7 @@ int send_file2(FILE *fp,int len) {
     }
 
     aux = malloc_msg(MAX_DATA_LEN);
-/*
-    if(len < 10000) { // small size
-        size = 0; // 0 means small size, 1 means medium size, 2 means big file.
-        perc = 0;
-    } else if(len >= 10000 && len <= 1000000) { // medium size
-        size = 1;
-        perc = len / 10; // Show on screen every 10% completed.
-    } else {
-        size = 2;
-        perc = len / 100; // Calculate 1% from file_size to show percentage on screen.
-    }
-*/
+
     Seq = 0;
 
     while(len > 0) {
@@ -410,18 +399,18 @@ int send_file2(FILE *fp,int len) {
         while(nob < remaining)
             nob += fread(c + nob,1,MAX_DATA_LEN-nob,fp);
         a = prepare_attr(remaining, Seq, TYPE_PUT);
-        m[mp] = prepare_msg(a, c);
-        send_msg(m[mp]);
-        mp = (mp + 1) % window;
+        m[mc] = prepare_msg(a, c);
+        send_msg(m[mc]);
+        mc = (mc + 1) % window;
         msgWaitAns++;
         Seq += 1;
-
+        len -= remaining; // ADICIONEI ISSO AQUI !!!!!!!
         while(msgWaitAns >= window) {
             if(!wait_response(aux)) { // Got an nack.
                 memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
                 for(i = 0; i < window; ++i) {
-                    if(m[(mp + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
-                        send_msg(m[(mp + i) % window]);
+                    if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
+                        send_msg(m[(mc + i) % window]);
                         break ; // Send message, wait for a response.
                     } else {
                         msgWaitAns--; // This was OK. I can send another one.
@@ -431,7 +420,7 @@ int send_file2(FILE *fp,int len) {
                 memcpy(&seqGot,aux->data,4); // Got an ack indicating this message and those before it were OK.
                 for(i = 0, j = 0; i < window; ++i) {
                     msgWaitAns--;
-                    if(seqGot == m[mp+i % window]->attr.seq) { // Look at bottom for proper comments explaining this.
+                    if(seqGot == m[mc+i % window]->attr.seq) { // Look at bottom for proper comments explaining this.
                         break ;
                     }
                     if(i >= window) { // Received a message with a Seq that was not from any message I sent!
@@ -456,7 +445,6 @@ int send_file2(FILE *fp,int len) {
     free(aux);
     return 1;
 }
-
 
 int wait_response_seq(Message *m) { // necessitamos // function that returns 0 if nack or 1 if ack
     unsigned char *buffer;
