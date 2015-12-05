@@ -123,11 +123,13 @@ void receive_file2(FILE *fp) {
     Message *m2 = malloc_msg(MAX_DATA_LEN);
     // Read all messages, created and updated the file, I should receive a TYPE_END.
     while((receive(buf, &m2, STD_TIMEOUT)) == 0); // Got a message.
+    par = get_parity(m2);
     while(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
         puts("(receive_file) Parity error or message wasnt an end.");
         print_message(m2);
         send_type(TYPE_NACK);
         while((receive(buf, &m2, STD_TIMEOUT)) == 0);
+        par = get_parity(m2);
     }
     /*while((receive(buf, &m2, STD_TIMEOUT)) == 0);
     par = get_parity(m2);
