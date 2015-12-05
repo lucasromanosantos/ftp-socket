@@ -48,9 +48,42 @@ Attr prepare_attr(int length,int seq,int type) {
     return a;
 }
 
-unsigned char* show_interface(int *comm,char *arg,char *buffer) {
+void print_progress(int *dataSent, int totalLen, int len, int size, int *completed, int *valueChange, int perc) {
+    if(size <= 0) {
+        return ;
+    }
+
+    int i;
+    *dataSent = totalLen - len;
+    if(*dataSent > *completed * perc/10 && size == 1) {
+        (*completed) += 10;
+        (*valueChange) = 1;
+    } else if(*dataSent > *completed * perc && size == 2) {
+        (*completed)++;
+        (*valueChange) = 1;
+    }
+    if(*completed > 100)
+        (*completed) = 100;
+    if(*valueChange) {
+        system("clear");
+        printf("Sending file...\n[");
+        for(i=0; i < (*completed)-9; i+=10) {
+            printf("=");
+        }
+        for(i=*completed; i<100; i+=10) {
+            printf(" ");
+        }
+        printf("]\n\n%d%% sent.\n\n\n",*completed);
+        (*valueChange) = 0;
+    }
+    return ;
+}
+
+char* show_interface(int *comm,char *arg,char *buffer) {
     // Watch out! *comm has to come already allocated.
     char com[6]; // Command
+    char *empty = malloc(sizeof(unsigned char));
+    empty[0] = '\0';
     int i = 0,len = strlen(buffer);
 
     if(IsClient)
@@ -95,7 +128,7 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
     } else if(strcmp(com, "clear") == 0) {
         system("clear");
         *comm = 7;
-        return "";
+        return empty;
     } else if(strcmp(com, "help") == 0) {
         *comm = 0;
         puts("Available commands:");
@@ -107,12 +140,12 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
         puts("\tput <path>");
         puts("\tget <path>");
         puts("\texit");
-        return "";
+        return empty;
     } else {
         *comm = 0;
         printf("%s",com);
         puts(": command not found.");
-        return "";
+        return empty;
     }
 
     if((*comm == 1 && buffer[2] != '\0') || (*comm == 3 && buffer[3] != '\0')) {
@@ -122,14 +155,14 @@ unsigned char* show_interface(int *comm,char *arg,char *buffer) {
             if(i == 7 + rls) { // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
                 *comm = 0;
                 puts("Ls can't have more than 2 arguments.");
-                return "";
+                return empty;
             }
             arg[i-4-rls] = buffer[i];
         }
         if((strcmp(arg,"l") != 0) && (strcmp(arg,"a") != 0) && (strcmp(arg,"la") != 0) && (strcmp(arg,"al") != 0)) {
             *comm = 0;
             puts("Invalid option. Try 'help'.");
-            return "";
+            return empty;
         }
         return arg;
     } else if (buffer[2] != '\0') {

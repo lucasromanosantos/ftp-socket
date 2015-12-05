@@ -2,7 +2,7 @@
 #include "utils.h"
 
 int receive(unsigned char *data, Message **m, int timeout) {
-    int retorno,rv = 0;
+    int rv = 0;
     struct pollfd ufds[1];
     ufds[0].fd = Socket;
     ufds[0].events = POLLIN; // check for just normal data
@@ -24,6 +24,9 @@ int receive(unsigned char *data, Message **m, int timeout) {
         int tmp_recv;
         if(ufds[0].revents & POLLIN) {
             tmp_recv = recv(Socket, data, MAX_LEN, 0);
+            if(tmp_recv == -1) {
+                printf("(receive) Error in recv! Error was: %s\n",strerror(errno));
+            }
             if(data[0] != 126) {// 126 = 0111 1110
               return 0; // Fail
             }
@@ -47,6 +50,7 @@ int receive(unsigned char *data, Message **m, int timeout) {
             return 1; // Success
         }
     }
+    return 0;
 }
 
 int wait_response() { // necessitamos // function that returns 0 if nack or 1 if ack
@@ -120,13 +124,10 @@ int msg_length(Message *m) {
     return 1 + 2 + m->attr.len + 1 + 1;
 }
 
-char* msg_to_str(Message *m) {
-    int i,pos;
+unsigned char* msg_to_str(Message *m) {
     unsigned char *c;
     if((c = malloc(msg_length(m))) == NULL) // put +1 for \0
         error("(msg_to_str) Unable to allocate memory."); // Allocar com o tamanho CORRETO da mensagem.
-    //else
-    //    puts("Memory allocated succesfully.");
     c[0] = m->init;
     memcpy(c+1,&m->attr,2);
     memcpy(c+3,m->data,m->attr.len);
@@ -135,7 +136,7 @@ char* msg_to_str(Message *m) {
     return c;
 }
 
-Message* str_to_msg(char* c) {
+Message* str_to_msg(unsigned char* c) {
     Message *m;
     Attr a;
     memcpy(&a,c+1,2);
@@ -171,10 +172,12 @@ void send_type(int type) {
 /* Send an empty message with attr->type set to our parameter.
  * We can use it to send acks, nacks, error and end messages.
  */
+    unsigned char *empty = malloc(sizeof(unsigned char));
+    empty[0] = '\0';
     Message *m;
     m = malloc_msg(0); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,Seq,type);
-    m = prepare_msg(attr,"0");
+    m = prepare_msg(attr,empty);
     send_msg(m);
     free(m);
     return ;
@@ -185,9 +188,9 @@ void send_data_type(int type, int seq) {
  * We can use it to send acks, nacks, error and end messages.
  */
     Message *m;
-    char *s = malloc(sizeof(int) * sizeof(char));
-    memcpy(s,&seq,4); // Got an nack indicating this message had error.
-    m = malloc_msg(4); // No data in this message, so, its length is 0.
+    unsigned char *s = malloc(sizeof(int) * sizeof(unsigned char));
+    memcpy(s,&seq,sizeof(int)); // Got an nack indicating this message had error.
+    m = malloc_msg(sizeof(int)); // No data in this message, so, its length is 0.
     Attr attr = prepare_attr(0,Seq,type);
     m = prepare_msg(attr,s);
     send_msg(m);
@@ -196,11 +199,10 @@ void send_data_type(int type, int seq) {
 }
 
 int send_msg(Message *m) {
-    int i,cont = 0;
+    int i;
     ssize_t n;
     size_t length = msg_length(m) * 8;
-    char *s = msg_to_str(m);
-    char *aux;// = s;
+    unsigned char *aux, *s = msg_to_str(m);
     aux = s;
     //printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
     //print_message(m);
@@ -227,4 +229,37 @@ int send_msg(Message *m) {
     //if(n <= 0)
        //Seq = (Seq + 1) % 64;
     return (n <= 0) ? - 1 : 0;
+}
+
+int wait_response_seq(Message *m) { // Function that returns 0 if nack or 1 if ack and edits m->data to get the wrong/correct seq.
+    unsigned char *buffer;
+    time_t seconds = 3,endwait;
+    int i;
+
+    endwait = time(NULL) + seconds;
+    if((buffer = malloc(1024)) == NULL)
+        return 0;
+
+    while(time(NULL) < endwait && i != 1)
+        i = receive(buffer, &m, STD_TIMEOUT);
+
+    if(i == 1) {
+        if(m->attr.type == TYPE_ACK) { // Got ack
+            free(buffer);
+            return 1;
+        } else if(m->attr.type == TYPE_NACK) {
+            free(buffer);
+            return 0;
+        } else if(m->attr.type == TYPE_ERROR) {
+            free(buffer);
+            return -1;
+        } else {
+            free(buffer);
+            return -2;
+        }
+    } else {
+        puts("(wait_response) Error! Timeout? \n");
+        free(buffer);
+        return -3;
+    }
 }

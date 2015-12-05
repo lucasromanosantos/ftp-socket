@@ -1,7 +1,7 @@
 #include "header.h"
 #include "dir.h"
 
-int count_slashes(unsigned char* c, int len) {
+int count_slashes(char* c, int len) {
     int i,count=0;
     for(i=0; i<len; ++i) {
         if(c[i] == '/') {
@@ -11,7 +11,7 @@ int count_slashes(unsigned char* c, int len) {
     return count;
 }
 
-void print_matrix(unsigned char** c,int n) {
+void print_matrix(char** c,int n) {
     int i;
     for(i=0; i<n; i++) {
         printf("\t");
@@ -19,11 +19,11 @@ void print_matrix(unsigned char** c,int n) {
     }
 }
 
-unsigned char** to_matrix(unsigned char *c, int n) {
+char** to_matrix(char *c, int n) {
     int i,j=0,k;
-    unsigned char **tmp = malloc(sizeof(unsigned char*) * n);
+    char **tmp = malloc(sizeof(char*) * n);
     for(i=0; i<n; i++) {
-        tmp[i] = malloc(sizeof(unsigned char*) * FILE_LEN);
+        tmp[i] = malloc(sizeof(char*) * FILE_LEN);
         for(k=0; k<FILE_LEN; k++) {
             tmp[i][k] = '\0';
         }
@@ -41,15 +41,15 @@ unsigned char** to_matrix(unsigned char *c, int n) {
     return tmp;
 }
 
-unsigned char* to_vector(unsigned char **c, int n) {
+char* to_vector(char **c, int n) {
     int i,size = 1024;
-    unsigned char *tmp = malloc(sizeof(unsigned char) * size);
+    char *tmp = malloc(sizeof(char) * size);
     for(i=0; i<size; i++)
         tmp[i] = '\0';
     for(i=0; i<n; i++) {
         if(strlen(tmp) + strlen(c[i]) > size) { // To prevent overflows.
             size = size * 2;
-            tmp = realloc(tmp,sizeof(unsigned char) * size);
+            tmp = realloc(tmp,sizeof(char) * size);
         }
         strcat(tmp,c[i]);
         strcat(tmp,"/");
@@ -61,9 +61,9 @@ unsigned char* to_vector(unsigned char **c, int n) {
     return tmp;
 }
 
-unsigned char* fix_dir(unsigned char *c, int length) {
+char* fix_dir(char *c, int length) {
     int i,j,n = count_slashes(c,length);
-    unsigned char **tmp;
+    char **tmp;
     tmp = to_matrix(c,n);
     // Now I have a matrix from the path, with n lines and unknown number of columns.
     for(i=2; i<n; i++) { // If tmp[0] == ../, theres nothing I can do with it.
@@ -83,7 +83,7 @@ unsigned char* fix_dir(unsigned char *c, int length) {
     return c;
 }
 
-int check_cd(unsigned char* c) {
+int check_cd(char* c) {
 /* This function will concatenate the path received with the global variable ADDR,
  * then it will fix it (every ../../) and will try to open this directory. If it does
  * not exist, or you do not have permission (which I doubt, cause you are sudo), error
@@ -93,9 +93,12 @@ int check_cd(unsigned char* c) {
     char *tmp;
     int len;
 
-    if(strlen(c) == 0) return;
-    if((tmp = malloc(sizeof(unsigned char) * 1024)) == NULL)
-        error("(check_cd) Error allocating memory.");
+    if(strlen(c) == 0)
+        return 0;
+    if((tmp = malloc(sizeof(char) * 1024)) == NULL) {
+        puts("(check_cd) Error allocating memory.");
+        exit(-1);
+    }
     len = strlen(c);
     if(c[len-1] != '/') {
         c[len] = '/';
@@ -135,13 +138,13 @@ char* ls(char* path, char* args) { // generic ls
     dir = opendir(path);
     if(dir == NULL) {
         printf("(ls_la) Error opening directory: %s\n", strerror(errno));
-        return strerror(errno);
+        return "";
     }
 
     if((strcmp(args,"") == 0) || (strcmp(args,"a") == 0)) {
         int total_length = 1;
         strcpy(this, "");            // Start the buffer
-        while(file = readdir(dir)) {
+        while((file = readdir(dir))) {
             strcpy(this, "");
             if (strcmp(args,"") == 0) {
                 if(file->d_name[0] != '.' &&
@@ -182,7 +185,7 @@ char* ls(char* path, char* args) { // generic ls
                 strcat(fileName,file->d_name);
                 if(stat(fileName, &fileStat) != 0) {
                     printf("(ls) Erro na syscall stat!\n");
-                    return;
+                    return "";
                 }
                 strcpy(this, ""); // reseting
 
@@ -249,7 +252,7 @@ char* ls(char* path, char* args) { // generic ls
 
     else {
         printf("Invalid arguments \n");
-        return;
+        return "";
     }
 
     closedir(dir);
