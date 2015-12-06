@@ -111,7 +111,8 @@ void receive_file2(FILE *fp) {
                 j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
             i += m->attr.len;
             //send_type(TYPE_ACK);
-            Seq += 1;
+            //Seq += 1;
+        	Seq = (Seq + 1) % 63;
             if((Seq % 3) == 2 || i == size) {
                 puts("Sending ack...");
                 send_data_type(TYPE_ACK, Seq);
@@ -180,6 +181,7 @@ int send_file2(FILE *fp,int len) {
 
     Seq = 0;
     totalLen = len;
+    printf("TotalLen = %d, Len = %d\n",totalLen,len);
 
     while(len > 0) {
         nob = 0;
@@ -189,19 +191,25 @@ int send_file2(FILE *fp,int len) {
         a = prepare_attr(remaining, Seq, TYPE_PUT);
         m[mc] = prepare_msg(a, c);
         send_msg(m[mc]);
+        printf("Sending -> ");
+        print_message(m[mc]);
         mc = (mc + 1) % window;
         msgWaitAns++;
-        Seq += 1;
+        //Seq += 1;
+        Seq = (Seq + 1) % 63;
         len -= remaining;
 
-        print_progress(&dataSent, totalLen, len, size, &completed, &valueChange, perc);
+        //print_progress(&dataSent, totalLen, len, size, &completed, &valueChange, perc);
 
-        while(msgWaitAns >= window) {
-            if(!wait_response(aux)) { // Got an nack.
+        while(msgWaitAns >= window) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
+            if(!wait_response_seq(aux)) { // Got an nack.
                 memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
+                puts("Some problem occured.");
                 for(i = 0; i < window; ++i) {
                     if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
                         send_msg(m[(mc + i) % window]);
+                        printf("Sending again --> ");
+                        print_message(m[(mc + i) % window]);
                         break ; // Send message, wait for a response.
                     } else {
                         msgWaitAns--; // This was OK. I can send another one.
@@ -219,9 +227,39 @@ int send_file2(FILE *fp,int len) {
                         return 0;
                     }
                 }
+                printf("Aux was: ");
+                print_message(aux);
+                printf("Got an ack to sequency %d, msgWaitAns = %d\n",seqGot,msgWaitAns);
             }
         }
     }
+
+    while(msgWaitAns >= 0) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
+        if(!wait_response(aux)) { // Got an nack.
+            memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
+            for(i = 0; i < window; ++i) {
+                if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
+                    send_msg(m[(mc + i) % window]);
+                    break ; // Send message, wait for a response.
+                } else {
+                    msgWaitAns--; // This was OK. I can send another one.
+                }
+            }
+        } else { // Got an ack after sending 3 messages.
+            memcpy(&seqGot,aux->data,4); // Got an ack indicating this message and those before it were OK.
+            for(i = 0; i < window; ++i) {
+                msgWaitAns--;
+                if(seqGot == m[mc+i % window]->attr.seq) { // Look at bottom for proper comments explaining this.
+                    break ;
+                }
+                if(i >= window) { // Received a message with a Seq that was not from any message I sent!
+                    puts("(Send_file2) Panic!!");
+                    return 0;
+                }
+            }
+        }
+    }
+
     //puts("Gonna send type_end.");
     unsigned char s[1];
     s[0] = '\0';
