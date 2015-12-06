@@ -118,7 +118,7 @@ void operate_server() {
                     puts("(operate_server) Put was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
-                    addr = strcpy(addr,LocalPath);
+                    strcpy(addr,LocalPath);
                     strcat(addr,(char*)m->data);
                     if((fp = fopen(addr,"r")) == NULL) {
                         printf("(operate_server) File does not exist. Error was: %s\n",strerror(errno));
@@ -126,7 +126,8 @@ void operate_server() {
                         length = send_filesize(fp);
                         if(send_file2(fp,length) != 1)
                             puts("(operate_server) Could not send file.");
-                        puts("(operate_server) Get was succesfull!\n\n");
+                        else
+                            puts("(operate_server) Get was succesfull!\n\n");
                     }
                 }
             }

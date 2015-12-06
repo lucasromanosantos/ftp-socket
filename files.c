@@ -142,6 +142,7 @@ void receive_file2(FILE *fp) {
     }*/
     send_type(TYPE_ACK);
     fclose(fp);
+    printf("Size = %d\n",size);
     return ;
 }
 
@@ -178,6 +179,7 @@ int send_file2(FILE *fp,int len) {
     }
 
     Seq = 0;
+    totalLen = len;
 
     while(len > 0) {
         nob = 0;
@@ -237,6 +239,7 @@ int send_file2(FILE *fp,int len) {
     }
     free(m); // To do this free, do we have to do a for?
     free(aux);
+    printf("TotalLen = %d, Len = %d\n",totalLen,len);
     return 1;
 }
 
