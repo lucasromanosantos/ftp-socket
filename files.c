@@ -101,7 +101,7 @@ void receive_file2(FILE *fp) {
     while(i < size) {
         while((receive(buf, &(m), STD_TIMEOUT)) == 0); // Got a message.
         par = get_parity(m);
-        print_message(m);
+        //print_message(m);
         printf("I == %d, Size = %d\n",i,size);
         if((int)par != (int)m->par) {
             puts("(receive_file) Parity error or message.");
@@ -111,7 +111,7 @@ void receive_file2(FILE *fp) {
                 j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
             i += m->attr.len;
             //send_type(TYPE_ACK);
-            Seq += 1;
+            Seq = (Seq + 1) % 63;
             if((Seq % 3) == 2 || i == size) {
                 puts("Sending ack...");
                 send_data_type(TYPE_ACK, Seq);

@@ -188,12 +188,15 @@ void send_data_type(int type, int seq) {
  * We can use it to send acks, nacks, error and end messages.
  */
     Message *m;
-    unsigned char *s = malloc(sizeof(int) * sizeof(unsigned char));
+    unsigned char *s = malloc((sizeof(int)+1) * sizeof(unsigned char));
     memcpy(s,&seq,sizeof(int)); // Got an nack indicating this message had error.
-    m = malloc_msg(sizeof(int)); // No data in this message, so, its length is 0.
-    Attr attr = prepare_attr(0,Seq,type);
+    m = malloc_msg(sizeof(int));
+    Attr attr = prepare_attr(sizeof(int),Seq,type);
     m = prepare_msg(attr,s);
+    memcpy(&seq,s,sizeof(int)); // Got an nack indicating this message had error.
+    printf("Seq that will be sent: %d\n\n",seq);
     send_msg(m);
+    print_message(m);
     free(m);
     return ;
 }
