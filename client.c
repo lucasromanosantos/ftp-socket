@@ -7,7 +7,7 @@
 
 void operate_client() { //
     FILE *fp;
-    int length, *comm;
+    int i, length, *comm;
     char *args, *addr, *buf;
 
     if((comm = malloc(sizeof(int))) == NULL)
@@ -22,9 +22,11 @@ void operate_client() { //
     while(1) {
         *comm = 0;
         while(*comm <= 0 || *comm >= 7) {
+            for(i = 0; i < 1024; i++) {
+                buf[i] = args[i] = addr[i] = '\0';
+            }
             args = show_interface(comm,args,buf);
             printf("Comm: %d - Args: '%s'\n",*comm,args);
-            puts("Yeah");
             if(*comm == 1) {
                 print_ls(ls(LocalPath,args));
             } else if(*comm == 2) {
