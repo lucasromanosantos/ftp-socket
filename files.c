@@ -112,13 +112,13 @@ void receive_file2(FILE *fp) {
             i += m->attr.len;
             //send_type(TYPE_ACK);
             //Seq += 1;
-        	Seq = (Seq + 1) % 63;
             if((Seq % 3) == 2 || i == size) {
                 puts("Sending ack...");
                 send_data_type(TYPE_ACK, Seq);
                 last_type = TYPE_ACK;
                 last_seq = Seq;
             }
+            Seq = (Seq + 1) % 63;
         }
     }
 
