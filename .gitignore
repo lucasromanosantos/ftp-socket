@@ -1,3 +1,6 @@
+alala
+gcc*
+data*
 teste
 test
 a.out
@@ -5,3 +8,5 @@ a.out
 main
 tmp
 *.o
+test*
+pdeSolver*
