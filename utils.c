@@ -24,7 +24,6 @@ unsigned char get_parity(Message *m) {
     for(i=0; i < (int)m->attr.len; i++) {
         res = res ^ m->data[i];
     }
-    //printf("Message length %d - Parity calculated: %d\n",(int)m->attr.len,(int)res);
     return res;
 }
 
@@ -82,8 +81,6 @@ void print_progress(int *dataSent, int totalLen, int len, int size, int *complet
 char* show_interface(int *comm,char *arg,char *buffer) {
     // Watch out! *comm has to come already allocated.
     char com[6]; // Command
-    char *empty = malloc(sizeof(unsigned char));
-    empty[0] = '\0';
     int i = 0,len = strlen(buffer);
 
     if(IsClient)
@@ -97,8 +94,6 @@ char* show_interface(int *comm,char *arg,char *buffer) {
 
     fgets(buffer,1024,stdin);
     buffer[strlen(buffer) - 1] = '\0';
-    //printf("Buffer: ");
-    //puts(buffer);
 
     len = strlen(arg);
     for(i=0; i<len; i++)
@@ -125,27 +120,11 @@ char* show_interface(int *comm,char *arg,char *buffer) {
         *comm = 6;
     } else if(strcmp(com, "exit") == 0) {
         exit(0);
-    } else if(strcmp(com, "clear") == 0) {
-        system("clear");
-        *comm = 7;
-        return empty;
-    } else if(strcmp(com, "help") == 0) {
-        *comm = 0;
-        puts("Available commands:");
-        puts("\tclear");
-        puts("\tls (options: -l, -a, -la)");
-        puts("\tcd <path>");
-        puts("\trls (options: -l, -a, -la)");
-        puts("\trcd <path>");
-        puts("\tput <path>");
-        puts("\tget <path>");
-        puts("\texit");
-        return empty;
     } else {
         *comm = 0;
         printf("%s",com);
         puts(": command not found.");
-        return empty;
+        return "";
     }
 
     if((*comm == 1 && buffer[2] != '\0') || (*comm == 3 && buffer[3] != '\0')) {
@@ -155,14 +134,14 @@ char* show_interface(int *comm,char *arg,char *buffer) {
             if(i == 7 + rls) { // Ls can only have 2 arguments (max), so, if it has 3, its an unknown command.
                 *comm = 0;
                 puts("Ls can't have more than 2 arguments.");
-                return empty;
+                return "";
             }
             arg[i-4-rls] = buffer[i];
         }
         if((strcmp(arg,"l") != 0) && (strcmp(arg,"a") != 0) && (strcmp(arg,"la") != 0) && (strcmp(arg,"al") != 0)) {
             *comm = 0;
             puts("Invalid option. Try 'help'.");
-            return empty;
+            return "";
         }
         return arg;
     } else if (buffer[2] != '\0') {

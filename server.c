@@ -9,14 +9,14 @@ void send_ls(char *args) { //
     }
     strcpy(result, ls(LocalPath,args));
     size_t nob = strlen(result); // nob = number of bytes
-    printf("(send_ls) Size of total nob: %d \n", (int) nob);
+    if(Log == 1)
+        printf("(send_ls) Size of total nob: %d \n", (int) nob);
 
     Message *m;
     m = malloc_msg(MAX_DATA_LEN);
     Attr attrs;
     unsigned char tmp[64];
     while(nob > 0) {
-        //printf("nob atual: %d \n", (int)nob);
         if(nob > MAX_DATA_LEN) {
             attrs = prepare_attr(MAX_DATA_LEN, Seq, TYPE_SHOWSCREEN);
             strncpy((char*)tmp, result, MAX_DATA_LEN);
@@ -40,10 +40,8 @@ void send_ls(char *args) { //
             send_msg(m);
 
             if(wait_response()) {
-                //send_type(TYPE_END);
                 nob = 0;
             } else {
-                //send_type(TYPE_ERROR);
                 Seq -= 3;
                 result -= MAX_DATA_LEN * (Seq - m->attr.seq);
                 nob += MAX_DATA_LEN * (Seq - m->attr.seq);
@@ -81,23 +79,20 @@ void operate_server() {
         res = receive(buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
             par = get_parity(m);
-            print_message(m);
+            if(Log == 1)
+                print_message(m);
             if((int)par != (int)m->par) {
                 send_type(TYPE_NACK);
                 printf("\t(operate_server) Nack sent. (%d vs %d) ",(int)par, (int)m->par);
             } else {
                 if (m->attr.type == TYPE_LS) { // client requested LS
-                    printf("requisitou ls");
                     send_type(TYPE_ACK);
-                    printf("Enviou ack pelo ls \n");
                     if(m->attr.len == 0) {
                         m->data[0] = '\0';
                     }
-                    puts("\t(operate_server) Received Ls. Ack sent. Sending ls.");
-                    //printf("data dentro da mensagem: %s \n", m->data);
-                    printf("Enviando LS com janelas. \n");
+                    puts("\t(operate_server) Received Ls request. Ack sent. Sending ls.");
                     send_ls((char*)m->data);
-                    puts("\t(operate_server) Ls was succesfull!\n\n");
+                    puts("\t(operate_server) Ls was succesfull!");
                 } else if (m->attr.type == TYPE_CD) { // client requested CD
                     puts("\t(operate_server) Received Cd. Ack sent.");
                     if(!check_cd((char*)m->data)) {
@@ -116,7 +111,7 @@ void operate_server() {
                         printf("Could not create a new file. Error was: %s\n",strerror(errno));
                         exit(1);
                     }
-                    receive_file2(fp);
+                    receive_file(fp);
                     puts("(operate_server) Put was succesfull!\n\n");
                 } else if (m->attr.type == TYPE_GET) { // client request GET
                     send_type(TYPE_ACK);
@@ -126,7 +121,7 @@ void operate_server() {
                         printf("(operate_server) File does not exist. Error was: %s\n",strerror(errno));
                     } else {
                         length = send_filesize(fp);
-                        if(send_file2(fp,length) != 1)
+                        if(send_file(fp,length) != 1)
                             puts("(operate_server) Could not send file.");
                         else
                             puts("(operate_server) Get was succesfull!\n\n");
@@ -136,78 +131,3 @@ void operate_server() {
         }
     }
 }
-/*
-void receive_file(FILE *fp) {
-    int res;
-    Message *m;
-    unsigned char *buf,par;
-
-    buf = malloc(sizeof(unsigned char) * MAX_DATA_LEN);
-    m = malloc_msg(MAX_DATA_LEN);
-
-    res = receive(buf, &m, STD_TIMEOUT);
-    par = get_parity(m);
-    print_message(m);
-
-    while(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
-        printf("Par: %d, mPar=%d, Type=\n",(int)par,(int)m->par);
-        puts("(receive_file) Parity error or message was not the file size.");
-        send_type(TYPE_NACK);
-        res = receive(buf, &m, STD_TIMEOUT);
-        par = get_parity(m);
-    }
-
-    unsigned int size,i=0,j;
-    memcpy(&size,m->data,4);
-    send_type(TYPE_ACK);
-
-    Seq = 0;
-    printf("I = %d, size = %d\n",i,size);
-    while(i < size) {
-        res = receive(buf, &m, STD_TIMEOUT);
-        par = get_parity(m);
-        print_message(m);
-        printf("I == %d, Size = %d\n",i,size);
-        if((int)par != (int)m->par) {
-            puts("(receive_file) Parity error or message.");
-            send_type(TYPE_NACK);
-        } else {
-            for(j=0; j<m->attr.len;) // Write data received in file.
-                j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
-            i += m->attr.len;
-            //send_type(TYPE_ACK);
-            Seq += 1;
-            if((Seq % 3) == 2 || i == size) {
-                puts("Sending ack...");
-                send_type(TYPE_ACK);
-            }
-        }
-    }
-
-    puts("Going to read the End Message.");
-    Message *m2 = malloc_msg(MAX_DATA_LEN);
-    // Read all messages, created and updated the file, I should receive a TYPE_END.
-    while((receive(buf, &m2, STD_TIMEOUT)) == 0); // Got a message.
-    while(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
-        puts("(receive_file) Parity error or message wasnt an end.");
-        print_message(m2);
-        send_type(TYPE_NACK);
-        while((receive(buf, &m2, STD_TIMEOUT)) == 0);
-    }
-    while((receive(buf, &m2, STD_TIMEOUT)) == 0);
-    par = get_parity(m2);
-    print_message(m2);
-    if(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
-        // This should be a while, sending nack and waiting for the right message.
-        puts("(receive_file) Parity error or message wasnt an end.");
-        print_message(m2);
-        return ;
-    }*/
-        /*
-    send_type(TYPE_ACK);
-    fclose(fp);
-    return ;
-}*/
-
-///////////////////////////////// Versao com repeticao seletiva
-

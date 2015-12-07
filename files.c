@@ -11,7 +11,7 @@ unsigned int get_file_size(FILE *fp) {
 }
 
 unsigned char* read_file(FILE *fp, unsigned int size) {
-	// Size is the size of the file (return value from get_file_size(fp)).
+// Size is the size of the file (return value from get_file_size(fp)).
 	int i;
 	unsigned char* c = malloc(sizeof(unsigned char) * (size + 1));
 	for(i = 0; i < size;) {
@@ -21,7 +21,7 @@ unsigned char* read_file(FILE *fp, unsigned int size) {
 }
 
 void write_file(FILE *fp, unsigned char *c, int size) {
-	// Size is the size of the file (return value from get_file_size(fp)).
+// Size is the size of the file (return value from get_file_size(fp)).
 	int i;
 	for(i=0; i<size; i++)
 		i += fwrite(c,sizeof(unsigned char),size-i,fp);
@@ -63,7 +63,7 @@ FILE* open_file(char *args) {
     return fp;
 }
 
-void receive_file2(FILE *fp) {
+void receive_file(FILE *fp) {
     int i, j, size, last_type, last_seq;
     Message *m;
     unsigned char *buf,par;
@@ -73,10 +73,12 @@ void receive_file2(FILE *fp) {
 
     while((receive(buf, &m, STD_TIMEOUT)) == 0); // Got a message.
     par = get_parity(m);
-    print_message(m);
+    if(Log == 1)
+	    print_message(m);
 
     while(((int)par != (int)m->par) || (m->attr.type != TYPE_FILESIZE)) {
-        printf("Par: %d, mPar=%d, Type=\n",(int)par,(int)m->par);
+        if(Log == 1)
+        	printf("Par: %d, mPar=%d, Type=\n",(int)par,(int)m->par);
         puts("(receive_file) Parity error or message was not the file size.");
         send_type(TYPE_NACK);
         while((receive(buf, &m, STD_TIMEOUT)) == 0); // Got a message.
@@ -88,7 +90,6 @@ void receive_file2(FILE *fp) {
 
     i = 0;
     Seq = 0;
-    //printf("I = %d, size = %d\n",i,size);
     while(i < size) {
         while(1) { // Got a message.
         	j = receive(buf, &(m), STD_TIMEOUT);
@@ -99,8 +100,8 @@ void receive_file2(FILE *fp) {
         	}
         }
         par = get_parity(m);
-        //print_message(m);
-        printf("I == %d, Size = %d\n",i,size);
+        if(Log == 1)
+        	printf("I == %d, Size = %d\n",i,size);
         if((int)par != (int)m->par) {
             puts("(receive_file) Parity error or message.");
             send_data_type(TYPE_NACK, m->attr.seq);
@@ -110,46 +111,37 @@ void receive_file2(FILE *fp) {
             for(j=0; j<m->attr.len;) // Write data received in file.
                 j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
             i += m->attr.len;
-            //send_type(TYPE_ACK);
-            //Seq += 1;
-        	Seq = (Seq + 1) % 63;
             if((Seq % 3) == 2 || i == size) {
-                puts("Sending ack...");
+                if(Log == 1)
+                	puts("Sending ack...");
                 send_data_type(TYPE_ACK, Seq);
                 last_type = TYPE_ACK;
                 last_seq = Seq;
             }
+        	Seq = (Seq + 1) % 63;
         }
     }
-
-    puts("Going to read the End Message.");
+    if(Log == 1)
+    	puts("Going to read the End Message.");
     Message *m2 = malloc_msg(MAX_DATA_LEN);
-    // Read all messages, created and updated the file, I should receive a TYPE_END.
-    while((receive(buf, &m2, STD_TIMEOUT)) == 0); // Got a message.
+    while((receive(buf, &m2, STD_TIMEOUT)) == 0); // Got a message (should be type_end).
     par = get_parity(m2);
     while(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
         puts("(receive_file) Parity error or message wasnt an end.");
-        print_message(m2);
+        if(Log == 1)
+        	print_message(m2);
         send_type(TYPE_NACK);
         while((receive(buf, &m2, STD_TIMEOUT)) == 0);
         par = get_parity(m2);
     }
-    /*while((receive(buf, &m2, STD_TIMEOUT)) == 0);
-    par = get_parity(m2);
-    print_message(m2);
-    if(((int)par != (int)m2->par) || (m2->attr.type != TYPE_END)) {
-        // This should be a while, sending nack and waiting for the right message.
-        puts("(receive_file) Parity error or message wasnt an end.");
-        print_message(m2);
-        return ;
-    }*/
     send_type(TYPE_ACK);
     fclose(fp);
-    printf("Size = %d\n",size);
+    if(Log == 1)
+    	printf("Size = %d\n",size);
     return ;
 }
 
-int send_file2(FILE *fp,int len) {
+int send_file(FILE *fp,int len) {
     int nob = 0, i, window = 3, mc = 0, remaining; // mc is message pointer, it counts which message is in turn.
     int size, perc, totalLen = len, dataSent, completed = 0, valueChange = 1, seqGot, msgWaitAns = 0;
     unsigned char *c;
@@ -183,7 +175,8 @@ int send_file2(FILE *fp,int len) {
 
     Seq = 0;
     totalLen = len;
-    printf("TotalLen = %d, Len = %d\n",totalLen,len);
+    if(Log == 1)
+    	printf("TotalLen = %d, Len = %d\n",totalLen,len);
 
     while(len > 0) {
         nob = 0;
@@ -193,27 +186,30 @@ int send_file2(FILE *fp,int len) {
         a = prepare_attr(remaining, Seq, TYPE_PUT);
         m[mc] = prepare_msg(a, c);
         send_msg(m[mc]);
-        printf("Sending -> ");
-        print_message(m[mc]);
+        if(Log == 1) {
+        	printf("Sending -> ");
+        	print_message(m[mc]);
+        }
         mc = (mc + 1) % window;
         msgWaitAns++;
-        //Seq += 1;
         Seq = (Seq + 1) % 63;
         len -= remaining;
 
-        //print_progress(&dataSent, totalLen, len, size, &completed, &valueChange, perc);
+        if(Log != 1)
+        	print_progress(&dataSent, totalLen, len, size, &completed, &valueChange, perc);
 
         while(msgWaitAns >= window) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
         	i = wait_response_seq(&aux);
         	memcpy(&seqGot,aux->data,4);
             if(i != 1) { // Got an nack.
-                puts("Some problem occured.");
                 if(seqGot == m[0]->attr.seq || seqGot == m[1]->attr.seq || seqGot == m[2]->attr.seq)
 	                for(i = 0; i < window; ++i) {
 	                    if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
 	                        send_msg(m[(mc + i) % window]);
-	                        printf("Sending again --> ");
-	                        print_message(m[(mc + i) % window]);
+	                        if(Log == 1) {
+	                        	printf("Sending again --> ");
+	                        	print_message(m[(mc + i) % window]);
+	                        }
 	                        break ; // Send message, wait for a response.
 	                    } else {
 	                        msgWaitAns--; // This was OK. I can send another one.
@@ -230,32 +226,36 @@ int send_file2(FILE *fp,int len) {
                         return 0;
                     }
                 }
-                printf("Aux was: ");
-                print_message(aux);
-                printf("Got an ack to sequency %d, msgWaitAns = %d\n",seqGot,msgWaitAns);
+                if(Log == 1) {
+                	printf("Aux was: ");
+                	print_message(aux);
+                	printf("Got an ack to sequency %d, msgWaitAns = %d\n",seqGot,msgWaitAns);
+                }
             }
         }
     }
-    printf("My length became 0 and WaitAns = %d.\n",msgWaitAns);
+    if(Log == 1)
+    	printf("My length became 0 and WaitAns = %d.\n",msgWaitAns);
     while(msgWaitAns > 0) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
     	i = wait_response_seq(&aux);
         memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
-    	printf("Result was : %d - Seq got = %d\n",i,seqGot);
+    	if(Log == 1)
+    		printf("Result was : %d - Seq got = %d\n",i,seqGot);
         if(i != 1) { // Got an nack.
-        	puts("A!!");
             for(i = 0; i < window; ++i) {
                 print_message(m[i]);
                 if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
                     send_msg(m[(mc + i) % window]);
-					printf("Sending again --> ");
-                    print_message(m[(mc + i) % window]);
+                    if(Log == 1) {
+						printf("Sending again --> ");
+                    	print_message(m[(mc + i) % window]);
+                    }
                     break ; // Send message, wait for a response.
                 } else {
                     msgWaitAns--; // This was OK. I can send another one.
                 }
             }
         } else { // Got an ack after sending 3 messages.
-            puts("B!!");
             if(seqGot == m[0]->attr.seq || seqGot == m[1]->attr.seq || seqGot == m[2]->attr.seq)
 	            for(i = 0; i < window; ++i) {
 	                msgWaitAns--;
@@ -268,7 +268,8 @@ int send_file2(FILE *fp,int len) {
 	                }
 	            }
         }
-        printf("msgWaitAns = %d\n",msgWaitAns);
+        if(Log == 1)
+        	printf("msgWaitAns = %d\n",msgWaitAns);
     }
 
     //puts("Gonna send type_end.");
@@ -277,10 +278,12 @@ int send_file2(FILE *fp,int len) {
     a = prepare_attr(0,Seq,TYPE_END);
     m[0] = prepare_msg(a,s);
     send_msg(m[0]);
-    print_message(m[0]);
+    if(Log == 1)
+    	print_message(m[0]);
     while(!wait_response()) {
         send_msg(m[0]);
-        print_message(m[0]);
+        if(Log == 1)
+        	print_message(m[0]);
     }
     free(c);
     for(i=0; i<3; i++) {
@@ -288,7 +291,8 @@ int send_file2(FILE *fp,int len) {
     }
     free(m); // To do this free, do we have to do a for?
     free(aux);
-    printf("TotalLen = %d, Len = %d\n",totalLen,len);
+    if(Log == 1)
+    	printf("TotalLen = %d, Len = %d\n",totalLen,len);
     return 1;
 }
 

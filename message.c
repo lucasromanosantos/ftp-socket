@@ -6,19 +6,13 @@ int receive(unsigned char *data, Message **m, int timeout) {
     struct pollfd ufds[1];
     data[0] = '\0';
     ufds[0].fd = Socket;
-    ufds[0].events = POLLIN; // check for just normal data
-    //rv = poll(ufds, 1, timeout);
-    //rv = poll(ufds, 1, -1);
+    ufds[0].events = POLLIN;
+
     rv = poll(ufds, 1, 500);
-    //time_t start = time(NULL);
-    //while(time(NULL) < start + 3 && rv <= 0) {
-    //    rv = poll(ufds,1,-1);     TESTE
-    //}
 
     if(rv == -1)
         error("(recv_tm) Erro no poll");
     else if (rv == 0) {
-        //puts("\t(recv_tm) Timeout! No data received! Is the server working?");
         return 0; // Fail
     }
     else { // Read the message. If the first byte isnt the init (0111 1110), discard the message.
@@ -34,20 +28,7 @@ int receive(unsigned char *data, Message **m, int timeout) {
             Attr a;
             memcpy(&a,data+1,2);
 
-            *m = str_to_msg(data);/*
-            unsigned char par = get_parity(*m);
-            if(par != (*m)->par) {
-                send_type(TYPE_NACK);
-                return 0;
-            }
-            if(Seq + 1 != (*m)->attr.seq) { isto acho que n vai ter
-                send_type(TYPE_NACK);
-                printf("seq fucked");
-                return 0;
-            }
-            Seq = (Seq + 1) % 64;
-            printf("(receive) Got this message(%d):",a.len);
-            print_message(*m); */
+            *m = str_to_msg(data);
             return 1; // Success
         }
     }
@@ -71,25 +52,18 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
     print_message(m);
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
-            //puts("(wait_response) Got an ack! \n");
-            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 1;
         } else if(m->attr.type == TYPE_NACK) {
-            //puts("(wait_response) Got a nack! \n");
-            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return 0;
         } else if(m->attr.type == TYPE_ERROR) {
-            //puts("(wait_response) Got an error! \n");
-            //Seq = (Seq + 1) % 64;
             free(buffer);
             free(m);
             return -1;
         } else {
-            //puts("(wait_response) Panic!!\n");
             free(buffer);
             free(m);
             return -2;
@@ -121,8 +95,6 @@ Message* malloc_msg(int length) {
 }
 
 int msg_length(Message *m) {
-    // init | attr | data | par | '\0'
-    //return   1 +  2 + strlen(m->data) + 1 + 1; // I changed this 26/10. It might bug something.
     return 1 + 2 + m->attr.len + 1 + 1;
 }
 
@@ -145,7 +117,6 @@ Message* str_to_msg(unsigned char* c) {
     m = malloc_msg(a.len + 5); // a.len only contains the length of the data. So, we have to add space for init byte,
                                // len, seq and type (2 bytes), parity byte and NULL byte, which equals to a.len + 5.
     m->init = c[0];
-    //memcpy(&m->attr,c+1 2);
     m->attr = a;
     if((m->data = malloc(m->attr.len)) == NULL)
         error("(str_to_msg) Unable to allocate memory.");
@@ -195,10 +166,13 @@ void send_data_type(int type, int seq) {
     m = malloc_msg(sizeof(int));
     Attr attr = prepare_attr(sizeof(int),Seq,type);
     m = prepare_msg(attr,s);
-    memcpy(&seq,s,sizeof(int)); // Got an nack indicating this message had error.
-    printf("Seq that will be sent: %d\n\n",seq);
+    if(Log == 1) {
+        memcpy(&seq,s,sizeof(int)); // Got an nack indicating this message had error.
+        printf("Seq that will be sent: %d\n\n",seq);
+    }
     send_msg(m);
-    print_message(m);
+    if(Log == 1)
+        print_message(m);
     free(m);
     return ;
 }
@@ -209,30 +183,24 @@ int send_msg(Message *m) {
     size_t length = msg_length(m) * 8;
     unsigned char *aux, *s = msg_to_str(m);
     aux = s;
-    //printf("\t(send_msg) Enviando (%d bytes): ",(int)length);
-    //print_message(m);
-    // Actually send the message.
+
     while(length > 0) {
         n = send(Socket, s, length, 0);
-        //printf("\t(send_msg) %d bits enviados... \n", (int)n);
-        //if(n <= 0) break; // Error
-        //Seq = (Seq + 1) % 64;
+
         if(n < 0) {
-            print_message(m);
+            if(Log == 1)
+                print_message(m);
             for(i=0; i<m->attr.len; i++) {
                 printf("%c",s[i]);
             }
-            puts("");
-            printf("\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
+            printf("\n\t(send_msg) Did not operate well. Error was: %s\n",strerror(errno));
             return 0;
         }
         s += n;
         length -= n;
     }
     free(aux);
-    //free(s);
-    //if(n <= 0)
-       //Seq = (Seq + 1) % 64;
+
     return (n <= 0) ? - 1 : 0;
 }
 
@@ -248,8 +216,10 @@ int wait_response_seq(Message **m) { // Function that returns 0 if nack or 1 if 
     while(time(NULL) < endwait && i != 1)
         i = receive(buffer, m, STD_TIMEOUT);
 
-    printf("Look what I got! ");
-    print_message(*m);
+    if(Log == 1) {
+        printf("Look what I got! ");
+        print_message(*m);
+    }
 
     if(i == 1) {
         if((*m)->attr.type == TYPE_ACK) { // Got ack

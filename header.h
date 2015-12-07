@@ -63,7 +63,7 @@
 #define NUM_FILE 32
 
 char *User,*LocalPath,*RemPath;
-int IsClient, Seq, Socket;
+int IsClient, Seq, Socket, Log;
 
 typedef struct Attr {
 	unsigned short len : 6,
