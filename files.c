@@ -245,13 +245,12 @@ int send_file2(FILE *fp,int len) {
         }
     }
     printf("My length became 0 and WaitAns = %d.\n",msgWaitAns);
-    while(msgWaitAns >= 0) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
+    while(msgWaitAns > 0) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
     	i = wait_response_seq(&aux);
-    	printf("Result was : %d\n",i);
+        memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
+    	printf("Result was : %d - Seq got = %d\n",i,seqGot);
         if(i != 1) { // Got an nack.
         	puts("A!!");
-            memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
-            puts("B!!");
             for(i = 0; i < window; ++i) {
                 print_message(m[i]);
                 if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
@@ -265,8 +264,6 @@ int send_file2(FILE *fp,int len) {
             }
         } else { // Got an ack after sending 3 messages.
         	puts("C!!");
-            memcpy(&seqGot,aux->data,4); // Got an ack indicating this message and those before it were OK.
-            puts("D!!");
             for(i = 0; i < window; ++i) {
                 msgWaitAns--;
                 if(seqGot == m[(mc+i) % window]->attr.seq) { // Look at bottom for proper comments explaining this.
