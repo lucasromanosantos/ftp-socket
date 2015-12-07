@@ -118,7 +118,7 @@ void receive_file(FILE *fp) {
                 last_type = TYPE_ACK;
                 last_seq = Seq;
             }
-        	Seq = (Seq + 1) % 63;
+            Seq = (Seq + 1) % 63;
         }
     }
     if(Log == 1)
