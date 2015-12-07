@@ -206,7 +206,7 @@ Message* wait_data() {
     unsigned char *buffer;
     time_t seconds = 3;
     time_t endwait;
-    int i;
+    int i = 0;
     if((buffer = malloc(1024)) == NULL)
         return 0;
     buffer[0] = '\0';

@@ -11,4 +11,4 @@ void send_data_type(int type, int seq);
 int send_msg(Message *m);
 int receive(unsigned char *data, Message **m, int timeout);
 int wait_response();
-int wait_response_seq(Message *m);
+int wait_response_seq(Message **m);

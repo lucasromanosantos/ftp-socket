@@ -56,7 +56,7 @@ int receive(unsigned char *data, Message **m, int timeout) {
 int wait_response() { // necessitamos // function that returns 0 if nack or 1 if ack
     unsigned char *buffer;
     time_t seconds = 3,endwait;
-    int i;
+    int i = 0;
     Message *m; // check
 
     endwait = time(NULL) + seconds;
@@ -66,7 +66,8 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 
     while(time(NULL) < endwait && i != 1)
         i = receive(buffer, &m, STD_TIMEOUT);
-
+    printf("Got this message in wait_response:");
+    print_message(m);
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
             //puts("(wait_response) Got an ack! \n");
@@ -234,26 +235,29 @@ int send_msg(Message *m) {
     return (n <= 0) ? - 1 : 0;
 }
 
-int wait_response_seq(Message *m) { // Function that returns 0 if nack or 1 if ack and edits m->data to get the wrong/correct seq.
+int wait_response_seq(Message **m) { // Function that returns 0 if nack or 1 if ack and edits m->data to get the wrong/correct seq.
     unsigned char *buffer;
     time_t seconds = 3,endwait;
-    int i;
+    int i = 0;
 
     endwait = time(NULL) + seconds;
     if((buffer = malloc(1024)) == NULL)
         return 0;
 
     while(time(NULL) < endwait && i != 1)
-        i = receive(buffer, &m, STD_TIMEOUT);
+        i = receive(buffer, m, STD_TIMEOUT);
+
+    printf("Look what I got! ");
+    print_message(*m);
 
     if(i == 1) {
-        if(m->attr.type == TYPE_ACK) { // Got ack
+        if((*m)->attr.type == TYPE_ACK) { // Got ack
             free(buffer);
             return 1;
-        } else if(m->attr.type == TYPE_NACK) {
+        } else if((*m)->attr.type == TYPE_NACK) {
             free(buffer);
             return 0;
-        } else if(m->attr.type == TYPE_ERROR) {
+        } else if((*m)->attr.type == TYPE_ERROR) {
             free(buffer);
             return -1;
         } else {
