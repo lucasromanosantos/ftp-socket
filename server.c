@@ -61,28 +61,30 @@ void send_ls(char *args) { //
 }
 
 void operate_server() {
-    char *buffer,*addr,par;
-    unsigned char *buffer2;
-    int res = 0, length;
+    char *addr;
+    unsigned char *buffer2, par;
+    int i, res = 0, length;
     Message *m;
     FILE *fp;
 
     if((buffer2 = malloc(MIN_LEN)) == NULL)
-        error("(operate_server) Error allocating memory.");
-    if((buffer = malloc(MAX_MSG_LEN)) == NULL)
         error("(operate_server) Error allocating memory.");
     if((addr = malloc(sizeof(char) * 1024)) == NULL)
         error("(operate_server) Error allocating memory.");
     m = malloc_msg(0);
 
     while(1) {
+        for(i = 0; i < MIN_LEN; i++)
+            buffer2[i] = '\0';
+        for(i = 0; i < 1024; i++)
+            addr[i] = '\0';
         res = receive(buffer2, &m, STD_TIMEOUT);
         if(res == 1) {
             par = get_parity(m);
             print_message(m);
             if((int)par != (int)m->par) {
                 send_type(TYPE_NACK);
-                printf("\t(operate_server) Nack sent.");
+                printf("\t(operate_server) Nack sent. (%d vs %d) ",(int)par, (int)m->par);
             } else {
                 if (m->attr.type == TYPE_LS) { // client requested LS
                     printf("requisitou ls");

@@ -64,7 +64,7 @@ FILE* open_file(char *args) {
 }
 
 void receive_file2(FILE *fp) {
-    int i, j, size; // mp is message pointer - it counts which message we are sending/receiving.
+    int i, j, size, last_type, last_seq;
     Message *m;
     unsigned char *buf,par;
 
@@ -90,13 +90,22 @@ void receive_file2(FILE *fp) {
     Seq = 0;
     //printf("I = %d, size = %d\n",i,size);
     while(i < size) {
-        while((receive(buf, &(m), STD_TIMEOUT)) == 0); // Got a message.
+        while(1) { // Got a message.
+        	j = receive(buf, &(m), STD_TIMEOUT);
+        	if(j == 1) { // Got correctly.
+        		break ;
+        	} else { // Maybe the client did not receive my last ack/nack. Send it again.
+        		send_data_type(last_type, last_seq);
+        	}
+        }
         par = get_parity(m);
         //print_message(m);
         printf("I == %d, Size = %d\n",i,size);
         if((int)par != (int)m->par) {
             puts("(receive_file) Parity error or message.");
             send_data_type(TYPE_NACK, m->attr.seq);
+            last_type = TYPE_NACK;
+            last_seq = m->attr.seq;
         } else {
             for(j=0; j<m->attr.len;) // Write data received in file.
                 j += fwrite(m->data + j,sizeof(unsigned char),m->attr.len-j,fp);
@@ -107,6 +116,8 @@ void receive_file2(FILE *fp) {
             if((Seq % 3) == 2 || i == size) {
                 puts("Sending ack...");
                 send_data_type(TYPE_ACK, Seq);
+                last_type = TYPE_ACK;
+                last_seq = Seq;
             }
         }
     }
@@ -229,21 +240,21 @@ int send_file2(FILE *fp,int len) {
     while(msgWaitAns >= 0) { // I sent 3 messages. I am waiting for an ack to tell me they were alright.
     	i = wait_response_seq(&aux);
     	memcpy(&seqGot,aux->data,4);
+    	printf("Result was : %d\n",i);
         if(i != 1) { // Got an nack.
-        	puts("A!!");
-            memcpy(&seqGot,aux->data,4); // Got an nack indicating this message had error.
             puts("B!!");
             for(i = 0; i < window; ++i) {
+                print_message(m[i]);
                 if(m[(mc + i) % window]->attr.seq == seqGot) { // Found the wrong message. Have to send it again.
                     send_msg(m[(mc + i) % window]);
+					printf("Sending again --> ");
+                    print_message(m[(mc + i) % window]);
                     break ; // Send message, wait for a response.
                 } else {
                     msgWaitAns--; // This was OK. I can send another one.
                 }
             }
         } else { // Got an ack after sending 3 messages.
-        	puts("A!!");
-            memcpy(&seqGot,aux->data,4); // Got an ack indicating this message and those before it were OK.
             puts("B!!");
             if(seqGot == m[0]->attr.seq || seqGot == m[1]->attr.seq || seqGot == m[2]->attr.seq)
 	            for(i = 0; i < window; ++i) {

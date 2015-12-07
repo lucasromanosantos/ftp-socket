@@ -4,6 +4,7 @@
 int receive(unsigned char *data, Message **m, int timeout) {
     int rv = 0;
     struct pollfd ufds[1];
+    data[0] = '\0';
     ufds[0].fd = Socket;
     ufds[0].events = POLLIN; // check for just normal data
     //rv = poll(ufds, 1, timeout);
@@ -34,7 +35,7 @@ int receive(unsigned char *data, Message **m, int timeout) {
             memcpy(&a,data+1,2);
 
             *m = str_to_msg(data);/*
-            char par = get_parity(*m);
+            unsigned char par = get_parity(*m);
             if(par != (*m)->par) {
                 send_type(TYPE_NACK);
                 return 0;
