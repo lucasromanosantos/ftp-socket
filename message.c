@@ -48,8 +48,11 @@ int wait_response() { // necessitamos // function that returns 0 if nack or 1 if
 
     while(time(NULL) < endwait && i != 1)
         i = receive(buffer, &m, STD_TIMEOUT);
-    printf("Got this message in wait_response:");
-    print_message(m);
+    
+    if(Log == 1) {
+        printf("Got this message in wait_response:");
+        print_message(m);
+    }
     if(i == 1) {
         if(m->attr.type == TYPE_ACK) { // got ack
             free(buffer);
