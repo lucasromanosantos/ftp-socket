@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     if((RemPath = malloc(sizeof(unsigned char) * 1024)) == NULL)
         error("(main) Error allocating memory.");
 
-    Log = 1;
+    //Log = 1;
     Log = 0;
 
     uid = geteuid ();

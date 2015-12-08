@@ -1,7 +1,7 @@
 #include "server.h"
 
 void send_ls(char *args) { //
-    char *result = malloc(1024);
+    char *result = malloc(32768);
     unsigned char *buffer;
     if((buffer = malloc(sizeof(char) * BUF_SIZE + 1)) == NULL) {
         puts("(send_ls) Unable to allocate memory");
@@ -35,7 +35,8 @@ void send_ls(char *args) { //
             attrs = prepare_attr(nob + 1, Seq, TYPE_SHOWSCREEN); // (+1 == TEMPORARY)
             strncpy((char*)tmp, result, nob);
             tmp[nob] = '\0';
-            printf("\nULTIMA STRING SENDO ENVIADA: %s \n", tmp);
+            if(Log == 1)
+                printf("\nULTIMA STRING SENDO ENVIADA: %s \n", tmp);
             m = prepare_msg(attrs, tmp);
             send_msg(m);
 
