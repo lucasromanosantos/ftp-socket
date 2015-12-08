@@ -108,23 +108,22 @@ int check_cd(char* c) {
     strcat(tmp,c);
     tmp = fix_dir(tmp,strlen(tmp));
     dir = opendir(tmp);
-    if(dir == NULL) {
-        // Problem. Server should send an error message (outside this function!).
+    if(dir == NULL) { // Problem. Server should send an error message (outside this function!).
         puts("(check_cd) Could not open this directory - it does not exit or you do not have permission.");
         free(tmp);
         return 0;
     }
     // If we got here, the path is correct. So, we should update ADDR.
     strcpy(LocalPath,tmp);
-    //printf("Final path (after CD): '%s'",LocalPath);
     closedir(dir);
     free(tmp);
     return 1;
 }
 
-char* ls(char* path, char* args) { // generic ls
-    //Receives a path and arguments as param and returns a char* with the data requested
-    //it has \n separator for every file
+char* ls(char* path, char* args) { // Generic ls
+/* Receives a path and arguments as param and returns a char* with the data requested
+ * it has \n separator for every file
+ */
     DIR *dir;
     struct dirent *file;
     char *res;
@@ -133,7 +132,8 @@ char* ls(char* path, char* args) { // generic ls
     res = malloc(sizeof(char));
     strcpy(res, "");
 
-    puts(args);
+    if(Log == 1)
+        puts(args);
 
     dir = opendir(path);
     if(dir == NULL) {
@@ -157,7 +157,7 @@ char* ls(char* path, char* args) { // generic ls
                 strcat(this, "\n");
             }
             total_length += strlen(this);
-            //printf("total length: %d\n", total_length);
+
             if((res = realloc(res,total_length)) == NULL) {
                 printf("(ls_la) Unable to allocate memory.");
                 exit(-1);
@@ -166,7 +166,6 @@ char* ls(char* path, char* args) { // generic ls
         }
     }
 
-    //else if(args == "l" || args == "la" || args == "al") {
     else if((strcmp(args,"l") == 0) || (strcmp(args,"la") == 0) || (strcmp(args,"al") == 0)) {
         char *fileName, aux[64], timebuf[64];
         struct stat fileStat;
@@ -239,7 +238,7 @@ char* ls(char* path, char* args) { // generic ls
 
                 // Concatenate into response
                 total_length += strlen(this);
-                //printf("total length: %d\n", total_length);
+
                 if((res = realloc(res,total_length)) == NULL) {
                     printf("(ls_la) Unable to allocate memory.");
                     exit(-1);

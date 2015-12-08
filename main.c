@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
         error("(main) Error allocating memory.");
 
     Log = 1;
+    Log = 0;
 
     uid = geteuid ();
     pw = getpwuid (uid);

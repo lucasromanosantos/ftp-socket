@@ -253,6 +253,5 @@ int listen_ls() {
     send_type(TYPE_ACK); // Sending an ack to TYPE_END message.
     print_ls(c);
     free(c);
-    free(m);
     return 1;
 }
